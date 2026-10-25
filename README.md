@@ -14,7 +14,7 @@ We appreciate the original author's and contributors' work. Their authorship, Gi
 
 ## Status and compatibility
 
-No NuaForma release has been published. The intended Maven coordinates are `dev.nuaforma:image-comparison` and the optional `dev.nuaforma:image-comparison-kotlin`; the development POM uses `4.4.1-SNAPSHOT`. The earlier 4.4.1 release idea must be reassessed before publication because the Java baseline and package changes break compatibility with upstream. The snapshot number is a development placeholder, not a release promise. No namespace claim or package publication is implied. Upstream tags identify upstream releases only.
+No NuaForma release has been published. The first release version is **5.0.0**, selected by the maintainer; the development version is `5.0.0-SNAPSHOT`. Coordinates are `dev.nuaforma:image-comparison` and the optional `dev.nuaforma:image-comparison-kotlin`. Java baseline, namespace and approved behavior changes intentionally break compatibility with upstream v4.4.0. Choosing the version does not create a release or tag. Upstream tags identify upstream releases only.
 
 Java 17 is the minimum supported runtime and API/bytecode target. Java 8 is unsupported. Production classes now use `dev.nuaforma.image.comparison` instead of `com.github.romankh3.image.comparison`. Method shapes are preserved; approved behavior corrections are recorded in CHANGELOG.md. The package relocation breaks source/binary compatibility and requires callers to update imports and recompile. The runtime baseline is also intentionally breaking. Build and tests require JDK 17 or later; CI checks JDK 17 and 25 and runs a standalone packaged consumer on both, including the Java 17 minimum for artifacts built on Java 25. Test libraries do not become runtime dependencies. Kotlin is optional and is not required by Java-only consumers. See [maintenance and compatibility](docs/maintenance.md) for exact boundaries and verification.
 
@@ -36,7 +36,7 @@ For Kotlin users, the single dependency is:
 
 ```kotlin
 dependencies {
-    testImplementation("dev.nuaforma:image-comparison-kotlin:4.4.1-SNAPSHOT")
+    testImplementation("dev.nuaforma:image-comparison-kotlin:5.0.0-SNAPSHOT")
 }
 ```
 
@@ -77,6 +77,10 @@ ImageComparisonResult result = new ImageComparison(expected, actual)
 ```
 
 Configuration options, image examples and the original usage guide are available in the [upstream v4.4.0 README](https://github.com/romankh3/image-comparison/blob/v4.4.0/README.md). Its installation coordinates refer to upstream artifacts; replace its `com.github.romankh3.image.comparison` imports with `dev.nuaforma.image.comparison` when adapting examples. This fork does not include later upstream APIs such as `simpleComparison()`.
+
+## Release preparation
+
+The [Maven Central release guide](docs/maven-central-releases.md) describes the shared NuaForma approach: manual preparation on protected `main`, an immutable signed `v<version>` source tag and exact artifact review, then separately authorized upload and publication. Ordinary builds require no signing credentials. Disposable-key QA and independent Maven/Gradle consumers run locally without external distribution. No push, merge or tag automatically releases packages.
 
 ## Maintenance and contributing
 

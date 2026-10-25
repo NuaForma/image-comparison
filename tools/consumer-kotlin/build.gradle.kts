@@ -1,3 +1,4 @@
+import java.util.Properties
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -12,9 +13,15 @@ dependencyLocking {
     ignoredDependencies.add("dev.nuaforma:*")
 }
 configurations.configureEach { resolutionStrategy.cacheChangingModulesFor(0, "seconds") }
+val comparisonVersion = providers.gradleProperty("comparisonVersion").orElse(
+    providers.fileContents(layout.projectDirectory.file("../../gradle.properties")).asText.map { text ->
+        Properties().apply { load(text.reader()) }.getProperty("version")
+    }
+)
+
 dependencies {
     // Deliberately the only declared library dependency: core and runtime must arrive transitively.
-    implementation("dev.nuaforma:image-comparison-kotlin:4.4.1-SNAPSHOT")
+    implementation("dev.nuaforma:image-comparison-kotlin:${comparisonVersion.get()}")
 }
 kotlin {
     compilerOptions {
@@ -46,3 +53,13 @@ val verifyDependencyGraph = tasks.register("verifyDependencyGraph") {
 }
 tasks.named("run") { dependsOn(verifyDependencyGraph) }
 tasks.withType<JavaExec>().configureEach { systemProperty("java.awt.headless", "true") }
+
+tasks.register("writeRuntimeInventory") {
+    dependsOn(verifyDependencyGraph)
+    doLast {
+        layout.buildDirectory.file("runtime-files.txt").get().asFile.apply {
+            parentFile.mkdirs()
+            writeText(configurations.runtimeClasspath.get().files.sortedBy { it.name }.joinToString("\n") { it.absolutePath } + "\n")
+        }
+    }
+}

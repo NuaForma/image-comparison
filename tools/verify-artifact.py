@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 """Verify consumer boundaries, metadata and attribution for both packaged libraries."""
+import argparse
+from release.publications import project_version
 import pathlib
 import struct
 import xml.etree.ElementTree as ET
 import zipfile
 
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--version', default=project_version())
+version = parser.parse_args().version
 root = pathlib.Path(__file__).resolve().parent.parent
 ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
 for module in ('image-comparison', 'image-comparison-kotlin'):
-    jar = root / module / 'build/libs' / (module + '-4.4.1-SNAPSHOT.jar')
+    jar = root / module / 'build/libs' / (module + '-' + version + '.jar')
     for artifact in (jar, jar.with_name(jar.stem + '-sources.jar'), jar.with_name(jar.stem + '-javadoc.jar')):
         with zipfile.ZipFile(artifact) as archive:
             for notice in ('LICENSE', 'NOTICE', 'MODIFICATIONS.md'):

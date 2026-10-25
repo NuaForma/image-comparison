@@ -8,7 +8,7 @@ dependencyResolutionManagement {
             forRepository {
                 maven {
                     name = "verification"
-                    url = uri("../../build/verification-repository")
+                    url = uri(providers.gradleProperty("comparisonRepository").orElse("../../build/verification-repository").get())
                     if (providers.gradleProperty("pomOnly").orNull == "true") {
                         metadataSources { mavenPom(); ignoreGradleMetadataRedirection() }
                     }
