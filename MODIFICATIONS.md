@@ -14,3 +14,5 @@ Changes for the unreleased maintenance baseline (2026-10-25):
 - Added Maven wrapper, CI, consumer/bytecode verification, maintenance/security/license review guides, changelog, agent entry point and this attribution record.
 
 No comparison algorithms or test image fixtures were changed. The Java package relocation changes fully qualified API names and the automatic module name; Java 17 is the new minimum. Both are intentional compatibility breaks. New repository files are NuaForma maintenance additions unless they carry an Apache wrapper header. Future changes must update this record and mark modified upstream files clearly.
+
+Dependency/POM review (issue #14): replace the remaining mocked filesystem failure with a real temporary parent-file failure in `ImageComparisonUtilUnitTest.java`; remove Mockito and its mock-maker resource; replace the broad JUnit aggregate with explicit test-scoped Jupiter API/engine dependencies. Constrain JUnit's transitive JSpecify annotations to the reviewed 1.0.1 patch. Clarify the POM resource root and retain pinned lifecycle/artifact plugins. Production code, public API and algorithm behavior are unchanged by this cleanup.
