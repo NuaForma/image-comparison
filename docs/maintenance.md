@@ -29,6 +29,10 @@ The build creates binary, sources and Javadoc JARs, with fixed archive timestamp
 
 Tests retain upstream image fixtures and assertions; filesystem paths use Maven output locations. The obsolete mock-based save-error test now writes to a real directory to exercise the same IOException contract. Keep failing tests visible. Do not disable a test to prepare a release.
 
+## Sequential comparison reuse
+
+An `ImageComparison` instance supports sequential `compareImages()` and `createMask()` calls. Region discovery recomputes its matrix and labels from the current input pixels and configured options; previous region labels do not affect the next result. This includes changing options between calls. Inputs remain caller-owned and mutable, so concurrent mutation of inputs or concurrent use/reconfiguration of the same comparison instance is unsupported. Use separate instances and stable inputs for independent operations. No thread-safety guarantee is introduced by the reuse fix.
+
 ## Branches, review and release
 
 - `develop`: default integration branch, created from v4.4.0.

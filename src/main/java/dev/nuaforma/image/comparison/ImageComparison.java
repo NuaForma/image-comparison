@@ -1,4 +1,4 @@
-// Modified by NuaForma: package relocation and origin-region preservation (#3); see MODIFICATIONS.md.
+// Modified by NuaForma: package relocation and correctness fixes (#3, #4); see MODIFICATIONS.md.
 package dev.nuaforma.image.comparison;
 
 import dev.nuaforma.image.comparison.model.ExcludedAreas;
@@ -280,6 +280,8 @@ public class ImageComparison {
      * @return the collection of the populated {@link Rectangle} objects.
      */
     private List<Rectangle> populateRectangles() {
+        counter = 2;
+        regionCount = counter;
         long countOfDifferentPixels = populateTheMatrixOfTheDifferences();
 
         if (countOfDifferentPixels == 0) {

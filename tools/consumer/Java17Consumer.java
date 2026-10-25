@@ -14,10 +14,15 @@ public final class Java17Consumer {
         require(new ImageComparison(expected, actual).compareImages().getImageComparisonState()
                 == ImageComparisonState.MATCH, "identical images");
         actual.setRGB(5, 5, Color.WHITE.getRGB());
-        ImageComparisonResult mismatch = new ImageComparison(expected, actual)
-                .setPixelToleranceLevel(0).compareImages();
+        ImageComparison comparison = new ImageComparison(expected, actual).setPixelToleranceLevel(0);
+        ImageComparisonResult mismatch = comparison.compareImages();
         require(mismatch.getImageComparisonState() == ImageComparisonState.MISMATCH, "different pixel");
         require(mismatch.getResult() != null && !mismatch.getRectangles().isEmpty(), "difference marking");
+        require(comparison.compareImages().getImageComparisonState() == ImageComparisonState.MISMATCH,
+                "repeated comparison");
+        require(comparison.createMask().size() == 1, "mask after comparisons");
+        require(comparison.compareImages().getImageComparisonState() == ImageComparisonState.MISMATCH,
+                "comparison after mask");
         Rectangle excluded = new Rectangle(4, 4, 6, 6);
         require(new ImageComparison(expected, actual).setPixelToleranceLevel(0)
                 .setExcludedAreas(Collections.singletonList(excluded)).compareImages()
