@@ -1,4 +1,4 @@
-// Modified by NuaForma: relocate packages to dev.nuaforma.image.comparison; see MODIFICATIONS.md.
+// Modified by NuaForma: package relocation and origin-region preservation (#3); see MODIFICATIONS.md.
 package dev.nuaforma.image.comparison;
 
 import dev.nuaforma.image.comparison.model.ExcludedAreas;
@@ -355,20 +355,22 @@ public class ImageComparison {
      * Find overlapping rectangles and merge them.
      */
     private List<Rectangle> mergeRectangles(List<Rectangle> rectangles) {
+        // Invalid default bounds cannot collide with a real single-pixel region at (0,0).
         int position = 0;
         while (position < rectangles.size()) {
-            if (rectangles.get(position).equals(Rectangle.createZero())) {
+            if (rectangles.get(position).equals(Rectangle.createDefault())) {
                 position++;
+                continue;
             }
             for (int i = 1 + position; i < rectangles.size(); i++) {
                 Rectangle r1 = rectangles.get(position);
                 Rectangle r2 = rectangles.get(i);
-                if (r2.equals(Rectangle.createZero())) {
+                if (r2.equals(Rectangle.createDefault())) {
                     continue;
                 }
                 if (r1.isOverlapping(r2)) {
                     rectangles.set(position, r1.merge(r2));
-                    r2.makeZeroRectangle();
+                    r2.setDefaultValues();
                     if (position != 0) {
                         position--;
                     }
@@ -377,7 +379,7 @@ public class ImageComparison {
             position++;
         }
 
-        return rectangles.stream().filter(it -> !it.equals(Rectangle.createZero())).collect(Collectors.toList());
+        return rectangles.stream().filter(it -> !it.equals(Rectangle.createDefault())).collect(Collectors.toList());
     }
 
     /**

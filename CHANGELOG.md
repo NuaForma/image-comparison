@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Preserve single-pixel differences at (0,0) when merging difference rectangles (#3).
+
 - Limit test dependencies to JUnit Jupiter API and engine; remove Mockito, its instrumentation dependencies and unused parameterized-test support.
 - Update the test-only transitive JSpecify annotation dependency from 1.0.0 to the reviewed 1.0.1 patch.
 

@@ -1,6 +1,6 @@
 # Build and dependency review
 
-Reviewed 2026-10-25 against primary project release pages and Maven Central POMs/metadata, for the maintenance baseline and the issue #14 POM cleanup. Versions are exact pins, not dynamic selectors. Production comparison logic remains unchanged and has no external runtime dependency.
+Reviewed 2026-10-25 against primary project release pages and Maven Central POMs/metadata, for the maintenance baseline and the issue #14 POM cleanup. Versions are exact pins, not dynamic selectors. The dependency/POM cleanup leaves production comparison logic unchanged and introduces no external runtime dependency.
 
 | Component | Selected version | License / rationale |
 | --- | --- | --- |
@@ -26,7 +26,7 @@ Exact-version [OSV API](https://google.github.io/osv.dev/api/) queries on 2026-1
 
 ## Original distribution
 
-The upstream v4.4.0 repository has an Apache-2.0 LICENSE and no NOTICE. Production comparison logic, image fixtures and original author history are preserved; source changes are the documented package relocation and modification notices. NOTICE credits Roman Beskrovnyi, upstream contributors and the original logo attribution to @dee-y. No new image/font fixtures are introduced; generated doclet assets are covered above. Binary, sources and Javadoc JARs embed LICENSE, NOTICE and MODIFICATIONS.md; the POM identifies both original author and fork maintainers. Namespace registration, artifact signing/publication and any new redistribution still need separate approval.
+The upstream v4.4.0 repository has an Apache-2.0 LICENSE and no NOTICE. Image fixtures and original author history are preserved; source changes and later behavior fixes are identified in MODIFICATIONS.md. NOTICE credits Roman Beskrovnyi, upstream contributors and the original logo attribution to @dee-y. No new image/font fixtures are introduced; generated doclet assets are covered above. Binary, sources and Javadoc JARs embed LICENSE, NOTICE and MODIFICATIONS.md; the POM identifies both original author and fork maintainers. Namespace registration, artifact signing/publication and any new redistribution still need separate approval.
 
 
 ## POM structure and necessity (issue #14)

@@ -24,6 +24,14 @@ public final class Java17Consumer {
                 .getImageComparisonState() == ImageComparisonState.MATCH, "excluded region");
         require(new ImageComparison(expected, new BufferedImage(11, 10, BufferedImage.TYPE_INT_RGB))
                 .compareImages().getImageComparisonState() == ImageComparisonState.SIZE_MISMATCH, "size mismatch");
+        BufferedImage originActual = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+        originActual.setRGB(0, 0, Color.WHITE.getRGB());
+        ImageComparisonResult origin = new ImageComparison(
+                new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB), originActual)
+                .setPixelToleranceLevel(0).compareImages();
+        require(origin.getImageComparisonState() == ImageComparisonState.MISMATCH, "different origin pixel");
+        require(origin.getRectangles().equals(Collections.singletonList(new Rectangle(0, 0, 0, 0))),
+                "origin difference marking");
         System.out.println("Independent Java 17 consumer passed on " + System.getProperty("java.version"));
     }
 
