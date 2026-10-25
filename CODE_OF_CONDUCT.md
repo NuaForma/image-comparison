@@ -1,3 +1,4 @@
+<!-- Modified by NuaForma: fork reporting route; see MODIFICATIONS.md. -->
 # Contributor Covenant Code of Conduct
 
 ## Our Pledge
@@ -63,7 +64,7 @@ further defined and clarified by project maintainers.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting the project team at roman.beskrovnyy@gmail.com. All
+reported by asking the NuaForma maintainers for a private channel through the fork repository. Do not include sensitive details in a public issue. All
 complaints will be reviewed and investigated and will result in a response that
 is deemed necessary and appropriate to the circumstances. The project team is
 obligated to maintain confidentiality with regard to the reporter of an incident.

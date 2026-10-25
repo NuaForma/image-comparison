@@ -1,0 +1,46 @@
+name: Build
+on:
+  push:
+    branches: [develop, main, 'codex/**']
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    name: Build (Java ${{ matrix.java }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['17', '25']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - name: Build and run inherited tests
+        run: ./mvnw --batch-mode --no-transfer-progress clean verify
+      - name: Check reproducible archives on the same JDK
+        run: |
+          sha256sum target/*.jar > target/archives.sha256
+          cp target/archives.sha256 /tmp/image-comparison-archives.sha256
+          ./mvnw --batch-mode --no-transfer-progress clean verify
+          sha256sum --check /tmp/image-comparison-archives.sha256
+      - name: Inspect artifact and compile independent Java 17 consumer
+        run: |
+          python3 tools/verify-artifact.py target/image-comparison-4.4.1-SNAPSHOT.jar
+          mkdir -p target/consumer
+          javac --release 17 -cp target/image-comparison-4.4.1-SNAPSHOT.jar -d target/consumer tools/consumer/Java17Consumer.java
+          java -Djava.awt.headless=true -cp target/consumer:target/image-comparison-4.4.1-SNAPSHOT.jar Java17Consumer
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Run packaged library and independent consumer on Java 17
+        run: java -Djava.awt.headless=true -cp target/consumer:target/image-comparison-4.4.1-SNAPSHOT.jar Java17Consumer
