@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Limit test dependencies to JUnit Jupiter API and engine; remove Mockito, its instrumentation dependencies and unused parameterized-test support.
+- Update the test-only transitive JSpecify annotation dependency from 1.0.0 to the reviewed 1.0.1 patch.
+
 - Establish NuaForma Image Comparison as an independently maintained Apache-2.0 fork of upstream v4.4.0.
 - Preserve the original comparison logic and method shapes.
 - **Breaking API change:** relocate packages to `dev.nuaforma.image.comparison`; callers must update imports and recompile.

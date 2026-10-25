@@ -7,8 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import dev.nuaforma.image.comparison.exception.ImageComparisonException;
 import dev.nuaforma.image.comparison.exception.ImageNotFoundException;
@@ -34,20 +32,19 @@ public class ImageComparisonUtilUnitTest {
         assertTrue(ex.getMessage().startsWith("Image with path = wrong-file-name.png not found"));
     }
 
-    @DisplayName("Should return null parent")
+    @DisplayName("Should fail when the image destination parent is a file")
     @Test
-    public void shouldReturnNullParent() {
+    public void shouldFailWhenDestinationParentIsAFile(@TempDir Path tempDir) throws IOException {
         //given
-        File path = mock(File.class);
-        File parent = mock(File.class);
-        when(path.isDirectory()).thenReturn(false);
-        when(path.mkdirs()).thenReturn(false);
-        when(path.getParentFile()).thenReturn(parent);
+        File parent = tempDir.resolve("not-a-directory").toFile();
+        assertTrue(parent.createNewFile());
+        File path = new File(parent, "result.png");
+        BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
 
         //when-then
         ImageComparisonException ex = assertThrows(ImageComparisonException.class,
-                () -> ImageComparisonUtil.saveImage(path, null));
-        assertTrue(ex.getMessage().startsWith("Unable to create directory "));
+                () -> ImageComparisonUtil.saveImage(path, image));
+        assertEquals("Unable to create directory " + parent, ex.getMessage());
     }
 
     @DisplayName("Should throw an exception when image can't be saved")
