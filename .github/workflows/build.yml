@@ -68,6 +68,10 @@ jobs:
         run: |
           python3 -m unittest discover -s tools/release
           python3 -O -m unittest discover -s tools/release
+      - name: Check standalone compiler metadata before warming root caches
+        # Configure the standalone consumer before the root build can warm metadata caches.
+        # Its verification metadata must be complete independently of the root project.
+        run: ./gradlew --no-daemon -p tools/consumer-kotlin help --refresh-dependencies
       - name: Disposable in-memory signing, verification and negative cases
         run: python3 tools/release/local_signing_qa.py --output build/signing-qa
       - name: Independent Maven and Gradle consumers of the synthetic candidate

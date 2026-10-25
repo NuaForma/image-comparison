@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 5.0.0 — release candidate
 
 - Prepare protected manual Maven Central workflows for the two library modules, signed source tags, exact eight-artifact review and separate upload/publish/public verification (#21).
 - Include the Kotlin sources JAR in Maven publication metadata as well as local assembly; verify both complete POM/binary/source/documentation sets and standalone Maven/Gradle consumers (#21).
@@ -32,7 +32,7 @@
 - Add a pinned Maven wrapper/build, explicit JUnit test engine, Java 17/25 checks and an independent Java 17 consumer check.
 - Define contribution, security, attribution and release review practices.
 
-The first NuaForma release is planned as **5.0.0**, selected by the maintainer on 25 October 2026. Development uses `5.0.0-SNAPSHOT`. No fork release, tag or Maven publication is created by release preparation.
+The first NuaForma release candidate is **5.0.0**, selected by the maintainer on 25 October 2026. This source fixes the candidate version for release review (#23). No fork release, tag or Maven publication is created by release preparation.
 
 ## Upstream history
 

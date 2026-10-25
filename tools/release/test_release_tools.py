@@ -259,6 +259,23 @@ class ProtocolTests(unittest.TestCase):
         result=portal.verify_published(IDENTITY,self.review,self.root/"public.asc","synthetic",self.root/"public",opener=self.transport)
         self.assertTrue(result["published"]);self.assertTrue(result["anonymousArtifactsVerified"]);self.assertEqual([],self.transport.publications())
 
+    def test_completed_status_without_purls_still_requires_exact_public_bytes(self):
+        self.transport.state = "PUBLISHED"
+        self.transport.purls = []
+        result = portal.verify_published(IDENTITY, self.review, self.root/"public.asc", "synthetic", self.root/"completed", opener=self.transport)
+        self.assertTrue(result["anonymousArtifactsVerified"])
+        self.transport.files[next(iter(release_paths(VERSION)))]=b"altered public artifact"
+        with self.assertRaises(ValueError):
+            portal.verify_published(IDENTITY, self.review, self.root/"public.asc", "synthetic", self.root/"altered", opener=self.transport)
+        self.transport.purls = ["pkg:maven/dev.nuaforma/wrong@"+VERSION]
+        with self.assertRaises(ValueError):
+            portal.verify_published(IDENTITY, self.review, self.root/"public.asc", "synthetic", self.root/"wrong", opener=self.transport)
+        self.transport.state = "VALIDATED"
+        self.transport.purls = []
+        with self.assertRaises(ValueError):
+            portal.publish(IDENTITY, self.review, self.root/"public.asc", "synthetic", opener=self.transport)
+        self.assertEqual([], self.transport.publications())
+
     def test_published_version_and_redirect_are_refused(self):
         with self.assertRaises(ValueError):portal.unused_version(VERSION,opener=lambda *a,**k:Response())
         request=portal.urllib.request.Request(portal.BASE+"status",headers={"Authorization":"Bearer synthetic"})
@@ -275,6 +292,27 @@ class ProtocolTests(unittest.TestCase):
 
 
 class WorkflowTests(unittest.TestCase):
+    def test_metadata_token_is_limited_to_this_repository_and_cannot_follow_redirects(self):
+        calls = []
+        def read(request, timeout):
+            calls.append(request)
+            response = Response(b'{"name":"maven-central"}')
+            response.url = request.full_url
+            return response
+        with patch.dict(os.environ, {"GH_TOKEN": "synthetic-github-read-token"}), \
+                patch.object(policy.urllib.request, "build_opener") as opener:
+            opener.return_value.open.side_effect = read
+            self.assertEqual({"name": "maven-central"}, policy.get_json(policy.API+"/environments/maven-central"))
+            self.assertEqual("GET", calls[0].get_method())
+            self.assertEqual("Bearer synthetic-github-read-token", calls[0].get_header("Authorization"))
+            self.assertIsInstance(opener.call_args.args[0], policy.GitHubNoRedirect)
+            for destination in (portal.BASE+"status", "https://api.github.com/repos/another/repository/environments"):
+                with self.assertRaises(ValueError):
+                    policy.get_json(destination)
+            self.assertEqual(1, len(calls))
+            with self.assertRaises(ValueError):
+                policy.GitHubNoRedirect().redirect_request(calls[0], None, 302, "redirect", {}, "https://example.invalid")
+
     def test_release_workflows_are_manual_main_only_and_scope_secrets_to_steps(self):
         names=("maven-central-prepare.yml","central-release-upload.yml","central-release-publish.yml","central-release-verify.yml")
         allowed={"MAVEN_SIGNING_KEY","MAVEN_SIGNING_PASSWORD","MAVEN_CENTRAL_USERNAME","MAVEN_CENTRAL_PASSWORD"}

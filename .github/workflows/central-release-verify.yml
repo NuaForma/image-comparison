@@ -22,6 +22,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: image-comparison-central-release
@@ -45,6 +46,8 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Verify protected main, signed source and exact eight-artifact human review
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           python3 tools/release/policy.py --version "$RELEASE_VERSION" --review "release-approvals/$RELEASE_VERSION.json"
       - name: Select pinned Java 17 publication toolchain
@@ -63,6 +66,7 @@ jobs:
           python3 tools/release/check_public_key.py build/release-review/public-key.asc
       - name: Require PUBLISHED, retrieve anonymously and run real external consumers
         env:
+          GH_TOKEN: ${{ github.token }}
           CENTRAL_DEPLOYMENT_ID: ${{ inputs.deployment_id }}
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}

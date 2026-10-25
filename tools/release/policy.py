@@ -46,11 +46,22 @@ def load_review(file, version):
     return check_review(json.loads(file.read_text(), object_pairs_hook=unique), version)
 
 
+class GitHubNoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, request, file, code, message, headers, url):
+        raise ValueError("GitHub release metadata redirects are refused")
+
+
 def get_json(url):
-    # Public metadata only; never attach publication credentials, follow an authenticated redirect or mutate settings.
-    request = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"})
-    with urllib.request.urlopen(request, timeout=30) as response:
-        require(response.url.startswith("https://api.github.com/"), "Unexpected GitHub metadata origin")
+    # Read-only GitHub metadata; never send this token to Central or another origin/repository.
+    require(url.startswith(API+"/"), "Unexpected GitHub metadata destination")
+    headers = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}
+    token = os.environ.get("GH_TOKEN")
+    if token:
+        headers["Authorization"] = "Bearer "+token
+    request = urllib.request.Request(url, headers=headers)
+    opener = urllib.request.build_opener(GitHubNoRedirect())
+    with opener.open(request, timeout=30) as response:
+        require(response.url.startswith(API+"/"), "Unexpected GitHub metadata origin")
         data = response.read(1024*1024+1)
         require(len(data) <= 1024*1024, "GitHub metadata exceeds its bound")
         return json.loads(data)

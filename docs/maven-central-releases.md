@@ -1,6 +1,6 @@
 # Maven Central release preparation
 
-The first planned release is **5.0.0**, explicitly selected by the maintainer. Development uses `5.0.0-SNAPSHOT`; the future source tag is `v5.0.0`. This setup creates no tag, GitHub release, Central deployment or publication. It follows NuaForma's parameterized release approach for exactly two libraries, without its server/Playground/container gates.
+The first release candidate is **5.0.0**, explicitly selected by the maintainer and fixed in this source; the future source tag is `v5.0.0`. This setup creates no tag, GitHub release, Central deployment or publication. It follows NuaForma's parameterized release approach for exactly two libraries, without its server/Playground/container gates.
 
 ## Coordinates and local publications
 
@@ -11,7 +11,7 @@ Both publications include POM, binary, sources and documentation JARs: **eight r
 
 ```sh
 ./gradlew --no-daemon clean build verifyJavaConsumer verifyGroupingConsumer verifyLibraryPublication
-python3 tools/release/consumers.py --repository build/verification-repository --version 5.0.0-SNAPSHOT --output build/release-consumers
+python3 tools/release/consumers.py --repository build/verification-repository --version 5.0.0 --output build/release-consumers
 python3 -m unittest discover -s tools/release
 python3 -O -m unittest discover -s tools/release
 python3 tools/release/local_signing_qa.py --output build/signing-qa-fresh
@@ -32,7 +32,7 @@ Create/configure image-comparison's own `maven-central` environment before any r
 - Administrator bypass: disabled.
 - Deployment branch rules: custom, exactly one rule of type branch named `main`; no tags, wildcards or other branches.
 
-The implementation reads these settings and refuses weaker/missing/unavailable metadata. It does not change existing security settings. Initial inspection on 25 October 2026 found no environments and no repository secrets. Following the maintainer's request for the same NuaForma configuration, the new maven-central environment was created with the exact required reviewer/no-bypass/main-only rules and verified through the API. No existing environment, branch protection or secret was changed. Configuration is available under the repository's Settings / Environments; verify the actual JSON, not just the environment name in YAML. Anonymous GitHub metadata access is used for this public project, as in NuaForma; 403/404/rate limits fail closed. No claim is made that contents:read GITHUB_TOKEN can inspect environment/secret metadata.
+The implementation reads these settings and refuses weaker/missing/unavailable metadata. It does not change existing security settings. Initial inspection on 25 October 2026 found no environments and no repository secrets. Following the maintainer's request for the same NuaForma configuration, the new maven-central environment was created with the exact required reviewer/no-bypass/main-only rules and verified through the API. No existing environment, branch protection or secret was changed. Configuration is available under the repository's Settings / Environments; verify the actual JSON, not just the environment name in YAML. Release metadata steps use the existing job GitHub token with contents:read and actions:read; the latter is the documented permission for reading environment metadata. The token is scoped to those steps and this repository on api.github.com, redirects are refused, and it is never used as a Central credential. This avoids shared anonymous API rate limits without adding credentials or weakening the gate. Local read-only checks can still request public metadata without a token; unavailable/403/404 responses fail closed. Organization-secret visibility remains a separate maintainer preflight; this token does not claim secret-administration rights. See [GitHub environment API permissions](https://docs.github.com/en/rest/deployments/environments#get-an-environment).
 
 The maintainer has configured these organization secrets for NuaForma and image-comparison:
 

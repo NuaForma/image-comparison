@@ -118,8 +118,17 @@ def status(identity, review, token, opener):
     data = payload(urllib.request.Request(BASE+"status?id="+identity, data=b"", method="POST",
                    headers={"Authorization": "Bearer "+token}), opener, 1024*1024)
     result = json.loads(data)
-    require(result.get("deploymentId") == identity and set(result.get("purls", [])) == {
-        "pkg:maven/dev.nuaforma/"+module+"@"+review["version"] for module in MODULES}, "Deployment identity/coordinates differ from review")
+    state = result.get("deploymentState")
+    safe_state = state if state in {"PENDING", "VALIDATING", "VALIDATED", "PUBLISHING", "PUBLISHED", "FAILED"} else "UNKNOWN"
+    coordinates = result.get("purls", [])
+    require(isinstance(coordinates, list) and all(isinstance(item, str) for item in coordinates), "Malformed deployment coordinates")
+    expected = {"pkg:maven/dev.nuaforma/"+module+"@"+review["version"] for module in MODULES}
+    # Central omits completed purls in practice. Publication still requires exact VALIDATED purls;
+    # read-only PUBLISHED verification independently checks every public path/hash/signature below.
+    coordinates_match = set(coordinates) == expected or (safe_state == "PUBLISHED" and not coordinates)
+    require(result.get("deploymentId") == identity and coordinates_match,
+        "Deployment identity/coordinates differ from review (state="+safe_state+
+        ", identityMatches="+str(result.get("deploymentId") == identity)+", coordinateCount="+str(len(coordinates))+")")
     return result
 
 
