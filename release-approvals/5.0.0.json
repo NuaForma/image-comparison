@@ -1,0 +1,19 @@
+{
+  "repository": "NuaForma/image-comparison",
+  "version": "5.0.0",
+  "sourceCommit": "a2e999bc95d97a0ac4ad676933e98ea339273a7a",
+  "signingFingerprint": "74317C6CE9C61B80A2A1C0B40F736E8D598CB08B",
+  "approved": false,
+  "reviewer": "mrhoeve",
+  "reviewedAt": "2026-10-25",
+  "artifactHashes": {
+    "dev/nuaforma/image-comparison/5.0.0/image-comparison-5.0.0.pom": "ee9d371be4ead5075ee6734998c6db192059f5cc4d52acea0bad899aa7528c59",
+    "dev/nuaforma/image-comparison/5.0.0/image-comparison-5.0.0.jar": "e675b6615f55751e2f38b56fd4974ca39bf8261aad01dcab42cd854e26d9e978",
+    "dev/nuaforma/image-comparison/5.0.0/image-comparison-5.0.0-sources.jar": "e506542aeed7d89536e7bfe16dd5c25c598abf94c6246498e330e92dbbedb4e6",
+    "dev/nuaforma/image-comparison/5.0.0/image-comparison-5.0.0-javadoc.jar": "c9e98ca233ecb90343e2b549c17c7f4387cf44bbfb7364f4be3370be06fbd08f",
+    "dev/nuaforma/image-comparison-kotlin/5.0.0/image-comparison-kotlin-5.0.0.pom": "692c77c11e6cb13b01e544c17be546d3faa3f7080e7e7a1264ed7e04ffcccb8a",
+    "dev/nuaforma/image-comparison-kotlin/5.0.0/image-comparison-kotlin-5.0.0.jar": "b7a303fd90a44bb3e859e5254e429fbd031d4d5f1b4299d54a56890e6167b61d",
+    "dev/nuaforma/image-comparison-kotlin/5.0.0/image-comparison-kotlin-5.0.0-sources.jar": "9de95e92b7414b0081aced040706c539277f002e99a9fd7a7d6f505ffe631239",
+    "dev/nuaforma/image-comparison-kotlin/5.0.0/image-comparison-kotlin-5.0.0-javadoc.jar": "64fdd26765ab28169c863f259f29724e22b2d54735c35a083bd055b1931b96ac"
+  }
+}
