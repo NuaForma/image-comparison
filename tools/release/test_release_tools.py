@@ -259,6 +259,23 @@ class ProtocolTests(unittest.TestCase):
         result=portal.verify_published(IDENTITY,self.review,self.root/"public.asc","synthetic",self.root/"public",opener=self.transport)
         self.assertTrue(result["published"]);self.assertTrue(result["anonymousArtifactsVerified"]);self.assertEqual([],self.transport.publications())
 
+    def test_completed_status_without_purls_still_requires_exact_public_bytes(self):
+        self.transport.state = "PUBLISHED"
+        self.transport.purls = []
+        result = portal.verify_published(IDENTITY, self.review, self.root/"public.asc", "synthetic", self.root/"completed", opener=self.transport)
+        self.assertTrue(result["anonymousArtifactsVerified"])
+        self.transport.files[next(iter(release_paths(VERSION)))]=b"altered public artifact"
+        with self.assertRaises(ValueError):
+            portal.verify_published(IDENTITY, self.review, self.root/"public.asc", "synthetic", self.root/"altered", opener=self.transport)
+        self.transport.purls = ["pkg:maven/dev.nuaforma/wrong@"+VERSION]
+        with self.assertRaises(ValueError):
+            portal.verify_published(IDENTITY, self.review, self.root/"public.asc", "synthetic", self.root/"wrong", opener=self.transport)
+        self.transport.state = "VALIDATED"
+        self.transport.purls = []
+        with self.assertRaises(ValueError):
+            portal.publish(IDENTITY, self.review, self.root/"public.asc", "synthetic", opener=self.transport)
+        self.assertEqual([], self.transport.publications())
+
     def test_published_version_and_redirect_are_refused(self):
         with self.assertRaises(ValueError):portal.unused_version(VERSION,opener=lambda *a,**k:Response())
         request=portal.urllib.request.Request(portal.BASE+"status",headers={"Authorization":"Bearer synthetic"})
