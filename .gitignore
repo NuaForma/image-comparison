@@ -12,3 +12,6 @@ target/*
 AGENTS.local.md
 /result.png
 **/target/
+
+**/__pycache__/
+*.pyc

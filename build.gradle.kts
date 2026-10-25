@@ -1,14 +1,20 @@
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
+import org.gradle.plugins.signing.SigningExtension
 
 plugins {
     base
     kotlin("jvm") version "2.4.21" apply false
 }
 
+val publicationVersion = providers.gradleProperty("releaseVersion")
+    .orElse(providers.gradleProperty("version")).get()
+require(publicationVersion.matches(Regex("[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?"))) {
+    "Publication version must be a safe explicit version"
+}
 allprojects {
     group = "dev.nuaforma"
-    version = "4.4.1-SNAPSHOT"
+    version = publicationVersion
 }
 
 subprojects {
@@ -52,10 +58,10 @@ subprojects {
                 url.set("https://github.com/NuaForma/image-comparison")
                 licenses { license { name.set("Apache License, Version 2.0"); url.set("https://www.apache.org/licenses/LICENSE-2.0") } }
                 developers {
-                    developer { id.set("romankh3"); name.set("Roman Beskrovnyi"); roles.set(listOf("Original author")) }
-                    developer { id.set("NuaForma"); name.set("NuaForma maintainers"); roles.set(listOf("Fork maintainer")) }
+                    developer { id.set("romankh3"); name.set("Roman Beskrovnyi"); roles.set(listOf("Original author")); url.set("https://github.com/romankh3") }
+                    developer { id.set("NuaForma"); name.set("NuaForma maintainers"); roles.set(listOf("Fork maintainer")); url.set("https://github.com/NuaForma"); organization.set("NuaForma"); organizationUrl.set("https://nuaforma.dev") }
                 }
-                scm { url.set("https://github.com/NuaForma/image-comparison"); connection.set("scm:git:https://github.com/NuaForma/image-comparison.git") }
+                scm { url.set("https://github.com/NuaForma/image-comparison"); connection.set("scm:git:https://github.com/NuaForma/image-comparison.git"); developerConnection.set("scm:git:ssh://git@github.com/NuaForma/image-comparison.git") }
             }
         }
         repositories {
@@ -63,6 +69,18 @@ subprojects {
                 name = "verification"
                 url = rootProject.layout.buildDirectory.dir("verification-repository").get().asFile.toURI()
             }
+        }
+    }
+    val signArtifacts = providers.gradleProperty("signArtifacts").orNull
+    require(signArtifacts == null || signArtifacts in setOf("true", "false")) { "signArtifacts must be true or false" }
+    if (signArtifacts == "true") {
+        apply(plugin = "signing")
+        val key = providers.environmentVariable("MAVEN_SIGNING_KEY").orNull
+        val password = providers.environmentVariable("MAVEN_SIGNING_PASSWORD").orNull
+        require(!key.isNullOrBlank() && !password.isNullOrBlank()) { "Artifact signing credentials are required" }
+        extensions.configure<SigningExtension> {
+            useInMemoryPgpKeys(key, password)
+            sign(extensions.getByType<PublishingExtension>().publications["mavenJava"])
         }
     }
     tasks.named<Jar>("jar") {
@@ -80,7 +98,7 @@ tasks.named("clean") { dependsOn(subprojects.map { "${it.path}:clean" }) }
 
 val verifyArtifacts = tasks.register<Exec>("verifyArtifacts") {
     dependsOn(":image-comparison:assemble", ":image-comparison-kotlin:assemble")
-    commandLine("python3", rootProject.file("tools/verify-artifact.py"))
+    commandLine("python3", rootProject.file("tools/verify-artifact.py"), "--version", publicationVersion)
 }
 tasks.named("check") { dependsOn(verifyArtifacts, subprojects.map { "${it.path}:check" }) }
 
@@ -114,4 +132,15 @@ tasks.register<JavaExec>("verifyGroupingConsumer") {
     systemProperty("java.awt.headless", "true")
     maxHeapSize = "128m"
     jvmArgs("-Xss1m")
+}
+
+// The only publication destination remains the ignored local filesystem repository.
+tasks.register("stageLibraries") {
+    dependsOn(subprojects.map { "${it.path}:publishAllPublicationsToVerificationRepository" })
+}
+tasks.register<Exec>("verifyLibraryPublication") {
+    dependsOn("stageLibraries")
+    commandLine("python3", rootProject.file("tools/release/publications.py"),
+        "--repository", layout.buildDirectory.dir("verification-repository").get().asFile.absolutePath,
+        "--version", publicationVersion, "--output", layout.buildDirectory.file("release-review/publications.json").get().asFile.absolutePath)
 }

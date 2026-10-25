@@ -1,0 +1,77 @@
+name: Prepare Maven Central release (no upload)
+on:
+  workflow_dispatch:
+    inputs:
+      organization_secrets_checked:
+        description: Maintainer just verified organization visibility and no matching repository/environment overrides (names only)
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: image-comparison-central-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.repository == 'NuaForma/image-comparison' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    environment: maven-central
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      ORGANIZATION_SECRET_SOURCES_CHECKED: ${{ inputs.organization_secrets_checked }}
+      IMAGE_COMPARISON_SOURCE_ROOT: ${{ github.workspace }}
+    steps:
+      - name: Check out reviewed main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify actual environment policy before private secret use
+        run: python3 tools/release/policy.py
+      - name: Select pinned Java 17 publication toolchain
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17.0.20+1'
+      - name: Verify wrapper identity
+        run: |
+          echo '7a9ce74cff467ca1bf60a4fcd9f05185acceda4d0f382434d393e17864262c5d  gradle/wrapper/gradle-wrapper.jar' | sha256sum --check --strict
+          test -x gradlew
+      - name: Verify unsigned libraries and test discovery
+        run: |
+          ./gradlew --no-daemon --no-build-cache clean build verifyJavaConsumer verifyGroupingConsumer verifyLibraryPublication
+          python3 tools/verify-test-results.py
+          python3 -m unittest discover -s tools/release -p 'test_*.py'
+          python3 -O -m unittest discover -s tools/release -p 'test_*.py'
+      - name: Verify packaged Maven and Gradle consumers
+        run: |
+          CANDIDATE_VERSION=$(python3 -c 'import sys; sys.path.insert(0, "tools/release"); from publications import project_version; print(project_version())')
+          python3 tools/release/consumers.py --repository build/verification-repository --version "$CANDIDATE_VERSION" --output build/release-consumers
+      - name: Fetch and verify approved public certificate (no private key)
+        run: |
+          mkdir -p build/release-review
+          curl --fail --silent --show-error --proto '=https' --max-time 30 --max-filesize 1048576             'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x74317C6CE9C61B80A2A1C0B40F736E8D598CB08B'             --output build/release-review/public-key.asc
+          python3 tools/release/check_public_key.py build/release-review/public-key.asc
+      - name: Sign local artifacts only (no Central token)
+        env:
+          MAVEN_SIGNING_KEY: ${{ secrets.MAVEN_SIGNING_KEY }}
+          MAVEN_SIGNING_PASSWORD: ${{ secrets.MAVEN_SIGNING_PASSWORD }}
+        run: python3 tools/release/sign_local.py
+      - name: Independently verify exact identity and all signatures
+        run: |
+          CANDIDATE_VERSION=$(python3 -c 'import sys; sys.path.insert(0, "tools/release"); from publications import project_version; print(project_version())')
+          python3 tools/release/signatures.py --repository build/verification-repository --version "$CANDIDATE_VERSION" --public-key build/release-review/public-key.asc --output build/release-review/signatures.json
+      - name: Retain non-executable review records only
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: image-comparison-preparation-${{ github.sha }}
+          path: |
+            build/release-review/signatures.json
+            build/release-review/publications.json
+            build/release-consumers/verification.json
+          if-no-files-found: error
+          retention-days: 14

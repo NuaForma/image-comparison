@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Prepare protected manual Maven Central workflows for the two library modules, signed source tags, exact eight-artifact review and separate upload/publish/public verification (#21).
+- Include the Kotlin sources JAR in Maven publication metadata as well as local assembly; verify both complete POM/binary/source/documentation sets and standalone Maven/Gradle consumers (#21).
+- Support opt-in in-memory artifact signing; ordinary builds remain credential-free. Local signing QA uses disposable identities and offline negative release-gate tests (#21).
+
 - Reject present but undecodable image inputs at the read boundary with ImageComparisonException; preserve ImageNotFoundException for missing input, sanitize control characters in diagnostic locations and retain I/O causes (#11).
 - Close owned classpath streams and dispose all library-created drawing contexts on success/failure, including graphics setup and conversion; preserve caller/result images and rendering output (#12).
 - **Result contract:** rectangle collections are never null. Every result starts with its own mutable empty list; null setter input resets to a fresh empty list while non-null list aliasing/mutability remains unchanged (#13).
@@ -28,7 +32,7 @@
 - Add a pinned Maven wrapper/build, explicit JUnit test engine, Java 17/25 checks and an independent Java 17 consumer check.
 - Define contribution, security, attribution and release review practices.
 
-The previous `4.4.1` idea requires a release-version decision because the runtime baseline and package relocation are breaking. The development version remains `4.4.1-SNAPSHOT` as a placeholder; no fork release, tag, Maven publication or namespace claim is made by this baseline.
+The first NuaForma release is planned as **5.0.0**, selected by the maintainer on 25 October 2026. Development uses `5.0.0-SNAPSHOT`. No fork release, tag or Maven publication is created by release preparation.
 
 ## Upstream history
 

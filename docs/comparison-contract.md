@@ -61,7 +61,7 @@ The packaged `GroupingConsumer` exercises horizontal/vertical strips, dense bloc
 
 ```sh
 /usr/bin/time -v java -Xss1m -Xmx128m -Djava.awt.headless=true \
-  -cp build/consumers/java:image-comparison/build/libs/image-comparison-4.4.1-SNAPSHOT.jar GroupingConsumer
+  -cp build/consumers/java:image-comparison/build/libs/image-comparison-5.0.0-SNAPSHOT.jar GroupingConsumer
 ```
 
 Callers must still bound decoded image dimensions and concurrent comparisons. Dimension/rectangle overflow and resource limits remain tracked in #10; this work does not claim arbitrary image sizes are supported. Owned-stream/graphics cleanup, explicit decode failures and non-null result collections are covered by #11/#12/#13. Existing binary image fixtures are unchanged.

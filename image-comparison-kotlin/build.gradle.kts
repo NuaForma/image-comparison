@@ -37,4 +37,7 @@ tasks.named<AbstractArchiveTask>("kotlinSourcesJar") {
         into("META-INF")
     }
 }
-publishing.publications.named<MavenPublication>("mavenJava") { artifact(documentationJar) }
+publishing.publications.named<MavenPublication>("mavenJava") {
+    artifact(documentationJar)
+    artifact(tasks.named("kotlinSourcesJar"))
+}
