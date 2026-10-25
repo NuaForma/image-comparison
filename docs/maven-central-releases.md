@@ -1,6 +1,6 @@
 # Maven Central release preparation
 
-The first planned release is **5.0.0**, explicitly selected by the maintainer. Development uses `5.0.0-SNAPSHOT`; the future source tag is `v5.0.0`. This setup creates no tag, GitHub release, Central deployment or publication. It follows NuaForma's parameterized release approach for exactly two libraries, without its server/Playground/container gates.
+The first release candidate is **5.0.0**, explicitly selected by the maintainer and fixed in this source; the future source tag is `v5.0.0`. This setup creates no tag, GitHub release, Central deployment or publication. It follows NuaForma's parameterized release approach for exactly two libraries, without its server/Playground/container gates.
 
 ## Coordinates and local publications
 
@@ -11,7 +11,7 @@ Both publications include POM, binary, sources and documentation JARs: **eight r
 
 ```sh
 ./gradlew --no-daemon clean build verifyJavaConsumer verifyGroupingConsumer verifyLibraryPublication
-python3 tools/release/consumers.py --repository build/verification-repository --version 5.0.0-SNAPSHOT --output build/release-consumers
+python3 tools/release/consumers.py --repository build/verification-repository --version 5.0.0 --output build/release-consumers
 python3 -m unittest discover -s tools/release
 python3 -O -m unittest discover -s tools/release
 python3 tools/release/local_signing_qa.py --output build/signing-qa-fresh

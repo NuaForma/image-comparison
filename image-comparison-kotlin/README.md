@@ -2,11 +2,11 @@
 
 The optional `dev.nuaforma:image-comparison-kotlin` artifact is intended for a consumer's test dependencies. Declare **only this artifact**: the Java core, Kotlin standard library and required JetBrains annotations arrive transitively. It works with any JVM test framework that recognizes `AssertionError`; JUnit, Kotest, AssertJ, kotlin-test and kotlin-reflect are not runtime dependencies.
 
-No NuaForma artifact is published yet. The first release is planned as `5.0.0`; development uses `5.0.0-SNAPSHOT`. No package is published by choosing the version. Java 17 is the minimum runtime/API/bytecode target; this version builds with Kotlin 2.4.21 and is qualified with that Kotlin compiler and JDK 17/25.
+No NuaForma artifact is published yet. This source prepares the first release candidate `5.0.0`. No package is published by choosing the version. Java 17 is the minimum runtime/API/bytecode target; this version builds with Kotlin 2.4.21 and is qualified with that Kotlin compiler and JDK 17/25.
 
 ```kotlin
 dependencies {
-    testImplementation("dev.nuaforma:image-comparison-kotlin:5.0.0-SNAPSHOT")
+    testImplementation("dev.nuaforma:image-comparison-kotlin:5.0.0")
 }
 ```
 

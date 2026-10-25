@@ -14,7 +14,7 @@ We appreciate the original author's and contributors' work. Their authorship, Gi
 
 ## Status and compatibility
 
-No NuaForma release has been published. The first release version is **5.0.0**, selected by the maintainer; the development version is `5.0.0-SNAPSHOT`. Coordinates are `dev.nuaforma:image-comparison` and the optional `dev.nuaforma:image-comparison-kotlin`. Java baseline, namespace and approved behavior changes intentionally break compatibility with upstream v4.4.0. Choosing the version does not create a release or tag. Upstream tags identify upstream releases only.
+No NuaForma release has been published. This source prepares the first release candidate **5.0.0**, selected by the maintainer. Coordinates are `dev.nuaforma:image-comparison` and the optional `dev.nuaforma:image-comparison-kotlin`. Java baseline, namespace and approved behavior changes intentionally break compatibility with upstream v4.4.0. Choosing the version does not create a release or tag. Upstream tags identify upstream releases only.
 
 Java 17 is the minimum supported runtime and API/bytecode target. Java 8 is unsupported. Production classes now use `dev.nuaforma.image.comparison` instead of `com.github.romankh3.image.comparison`. Method shapes are preserved; approved behavior corrections are recorded in CHANGELOG.md. The package relocation breaks source/binary compatibility and requires callers to update imports and recompile. The runtime baseline is also intentionally breaking. Build and tests require JDK 17 or later; CI checks JDK 17 and 25 and runs a standalone packaged consumer on both, including the Java 17 minimum for artifacts built on Java 25. Test libraries do not become runtime dependencies. Kotlin is optional and is not required by Java-only consumers. See [maintenance and compatibility](docs/maintenance.md) for exact boundaries and verification.
 
@@ -36,7 +36,7 @@ For Kotlin users, the single dependency is:
 
 ```kotlin
 dependencies {
-    testImplementation("dev.nuaforma:image-comparison-kotlin:5.0.0-SNAPSHOT")
+    testImplementation("dev.nuaforma:image-comparison-kotlin:5.0.0")
 }
 ```
 
