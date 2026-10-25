@@ -3,7 +3,7 @@
 from pathlib import Path
 import xml.etree.ElementTree as ET
 root = Path(__file__).resolve().parent.parent
-for module, minimum in [('image-comparison', 70), ('image-comparison-kotlin', 14)]:
+for module, minimum in [('image-comparison', 94), ('image-comparison-kotlin', 17)]:
     reports = list((root / module / 'build/test-results/test').glob('TEST-*.xml'))
     totals = dict.fromkeys(['tests', 'failures', 'errors', 'skipped'], 0)
     for path in reports:

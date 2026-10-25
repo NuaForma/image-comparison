@@ -14,13 +14,13 @@ fun assertImagesMatch(expected: BufferedImage, actual: BufferedImage,
 <h2>ImageComparisonOptions</h2>
 <p>The constructor is internal; configure it through a function's receiver lambda, marked with the public <code>@ImageComparisonDsl</code> annotation.</p>
 <table><tr><th>Member</th><th>Default and contract</th></tr>
-<tr><td><code>pixelTolerance: Double</code></td><td>0.1; finite [0,1). Zero uses the engine's exact packed-pixel comparison.</td></tr>
-<tr><td><code>allowedDifferentPixelsPercent: Double</code></td><td>0.0; finite [0,100]. Counts pixels according to core rules, not the RGB difference metric.</td></tr>
+<tr><td><code>pixelTolerance: Double</code></td><td>0.1; finite [0,1). Zero compares exact ARGB; positive tolerance independently bounds normalized RGB and alpha distance.</td></tr>
+<tr><td><code>allowedDifferentPixelsPercent: Double</code></td><td>0.0; finite [0,100]. Inclusive percentage of non-excluded pixels exceeding tolerance; accepted results retain the measured percentage.</td></tr>
 <tr><td><code>threshold: Int</code></td><td>5; positive grouping distance in pixels.</td></tr>
 <tr><td><code>excludeRectangle(minX: Int, minY: Int, maxX: Int, maxY: Int)</code></td><td>Inclusive nonnegative ordered coordinates, entirely inside the expected image. Bounds are checked before comparison.</td></tr></table>
 <h2>ImageComparisonAssertionError</h2>
-<p>Extends <code>AssertionError</code>; its constructor is internal. The public <code>comparisonResult: ImageComparisonResult</code> retains the mutable Java result and difference image for caller-controlled handling. The message contains optional context, state, dimensions, reported RGB difference and region count. It is locale-independent and includes no image contents.</p>
+<p>Extends <code>AssertionError</code>; its constructor is internal. The public <code>comparisonResult: ImageComparisonResult</code> retains the mutable Java result and difference image for caller-controlled handling. The message contains optional context, state, dimensions, differing-pixel percentage and region count. It is locale-independent and includes no image contents.</p>
 <h2>Policies and limits</h2>
-<p>Core alpha, percentage and exclusion policies are inherited unchanged. Reported RGB percentage and allowed differing-pixel percentage differ; excluded pixels may still affect the reported metric. Rectangle fills/visual filters are not exposed. Inputs/results retain core ownership semantics and are not immutable snapshots. Concurrent input mutation is unsupported. No resource-limit or file-decoding guarantee is added.</p>
+<p>Core comparison uses RGB and alpha, including hidden RGB at alpha zero. Exclusions affect both numerator and denominator; all excluded means zero. Unequal dimensions always mean SIZE_MISMATCH and 100%, without resizing. Grouping uses a heap worklist with constant call-stack use. Rectangle fills/visual filters are not exposed. Inputs/results retain core ownership semantics and are not immutable snapshots. Concurrent input mutation is unsupported. No resource-limit or file-decoding guarantee is added.</p>
 <p>See <a href="README.md">the usage guide</a> and KDoc in the sources archive. Apache-2.0; project origin and modifications are recorded in <code>META-INF/LICENSE</code>, <code>META-INF/NOTICE</code> and <code>META-INF/MODIFICATIONS.md</code>.</p>
 </body></html>

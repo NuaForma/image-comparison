@@ -44,17 +44,21 @@ This brings in `image-comparison`, Kotlin stdlib and required annotations transi
 
 The rectangle is inclusive and must fit inside `expected`. Mismatches throw an inspectable `AssertionError`; the API never writes diagnostics automatically. No Kotlin artifact is published yet. See the module guide for allowed percentages, validation, result ownership and inherited core-policy limitations.
 
+## Comparison behavior
+
+The [comparison contract](docs/comparison-contract.md) defines tolerance, transparency, exclusions, percentages and drawing filters. RGB and alpha both participate in pixel comparison. Reported difference is the percentage of non-excluded pixels exceeding tolerance; accepted matches can retain a nonzero percentage. Unequal dimensions always mean `SIZE_MISMATCH` and 100%, without resizing. Minimum rectangle size and maximum rectangle count affect drawing only. Grouping uses a heap worklist rather than recursive calls.
+
 ## Build
 
 Use the checked-in Gradle wrapper and select an installed JDK 17 or 25 with `JAVA_HOME`. Production Java and Kotlin target Java 17 APIs/bytecode independently of the JDK that runs the build/tests. No JDK is downloaded automatically. The first run requires access to Gradle distribution repositories, the official Gradle Plugin Portal and Maven Central.
 
 ```sh
-./gradlew --no-daemon clean build verifyJavaConsumer publishAllPublicationsToVerificationRepository
+./gradlew --no-daemon clean build verifyJavaConsumer verifyGroupingConsumer publishAllPublicationsToVerificationRepository
 ./gradlew --no-daemon -p tools/consumer-kotlin run
 ./gradlew --no-daemon -p tools/consumer-kotlin run -PpomOnly=true
 ```
 
-The first command builds/tests both modules, checks artifact boundaries and runs a Java consumer against only the packaged core. It writes artifacts to the ignored local `build/verification-repository` solely for verification; no external repository or credentials are configured. The independent Kotlin project declares only the Kotlin artifact and checks its transitives twice: Gradle metadata and POM-only resolution. No source-project substitution is allowed.
+The first command builds/tests both modules, checks artifact boundaries and runs Java consumers against only the packaged core, including grouping smoke checks with a 1 MiB stack and 128 MiB heap. It writes artifacts to the ignored local `build/verification-repository` solely for verification; no external repository or credentials are configured. The independent Kotlin project declares only the Kotlin artifact and checks its transitives twice: Gradle metadata and POM-only resolution. No source-project substitution is allowed.
 
 Use `gradlew.bat` and the platform classpath separator where appropriate. Run archive reproducibility/Java-17 runtime checks as described in [maintenance](docs/maintenance.md). The approved Gradle migration replaces the Maven build; historical build configurations remain in Git history. No release, namespace claim or upload is performed by these commands.
 

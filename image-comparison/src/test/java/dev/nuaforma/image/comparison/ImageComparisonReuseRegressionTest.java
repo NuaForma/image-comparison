@@ -54,7 +54,7 @@ class ImageComparisonReuseRegressionTest {
     @Test
     void sequentialConfigurationChangesRemainEffective() {
         BufferedImage actual = image();
-        actual.setRGB(5, 5, 0xff202020);
+        actual.setRGB(5, 5, 0x00202020); // Keep alpha equal to isolate RGB tolerance changes.
         ImageComparison comparison = comparison(image(), actual);
 
         assertEquals(MISMATCH, comparison.compareImages().getImageComparisonState());

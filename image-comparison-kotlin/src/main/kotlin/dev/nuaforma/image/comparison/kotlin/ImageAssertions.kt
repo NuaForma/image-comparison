@@ -15,20 +15,20 @@ public annotation class ImageComparisonDsl
 /**
  * Validated configuration for a single comparison. Each DSL call creates a new configuration and engine.
  *
- * Rectangle coordinates are inclusive and relative to the expected image. Comparison policies, including
- * alpha handling and the distinction between allowed pixel percentage and reported RGB difference,
- * are inherited from the Java engine. This builder does not expose drawing filters or rectangle fills.
+ * Rectangle coordinates are inclusive and relative to the expected image. Percentage counts pixels
+ * exceeding RGB or alpha tolerance among non-excluded pixels. This builder does not expose drawing
+ * filters or rectangle fills. Straight ARGB values, including hidden RGB at alpha zero, are compared.
  */
 @ImageComparisonDsl
 public class ImageComparisonOptions internal constructor() {
-    /** RGB distance tolerance in [0,1); zero requests the engine's exact packed-pixel comparison. */
+    /** RGB and alpha tolerance in [0,1); zero requests exact ARGB comparison, including hidden RGB. */
     public var pixelTolerance: Double = 0.1
         set(value) {
             require(value.isFinite() && value >= 0 && value < 1) { "pixelTolerance must be finite and in [0, 1)" }
             field = value
         }
 
-    /** Percentage of differing pixels the engine may accept, in [0,100]. This is not its RGB difference metric. */
+    /** Inclusive percentage of non-excluded differing pixels the engine may accept, in [0,100]. */
     public var allowedDifferentPixelsPercent: Double = 0.0
         set(value) {
             require(value.isFinite() && value >= 0 && value <= 100) {
@@ -102,7 +102,7 @@ public fun assertImagesMatch(
     val result = compareImages(expected, actual, configure)
     if (result.imageComparisonState != ImageComparisonState.MATCH) {
         val diagnostic = "${result.imageComparisonState}: expected ${expected.width}x${expected.height}, " +
-            "actual ${actual.width}x${actual.height}; reported RGB difference " +
+            "actual ${actual.width}x${actual.height}; different pixels " +
             String.format(Locale.ROOT, "%.4f%%", result.differencePercent) +
             "; regions ${result.rectangles?.size ?: 0}"
         val context = message?.takeIf { it.isNotEmpty() }?.let { "$it: " } ?: ""
