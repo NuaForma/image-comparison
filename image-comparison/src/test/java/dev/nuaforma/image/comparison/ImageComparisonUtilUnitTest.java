@@ -1,4 +1,4 @@
-// Modified by NuaForma: package relocation and Maven test setup; see MODIFICATIONS.md.
+// Modified by NuaForma: package relocation and Gradle test setup; see MODIFICATIONS.md.
 package dev.nuaforma.image.comparison;
 
 import static dev.nuaforma.image.comparison.ImageComparisonUtil.readImageFromResources;
@@ -65,7 +65,7 @@ public class ImageComparisonUtilUnitTest {
     @Test
     public void shouldProperlySaveImage() {
         BufferedImage image = readImageFromResources("result.png");
-        String path = "target/test/correct/save/image.png";
+        String path = "build/test/correct/save/image.png";
         ImageComparisonUtil.saveImage(new File(path), image);
         assertTrue(new File(path).exists());
     }
@@ -155,7 +155,7 @@ public class ImageComparisonUtilUnitTest {
     @Test
     public void shouldProperlyHandleBug180FromRoot() {
         //given
-        String imagePath = "target/test-classes/result.png";
+        String imagePath = "build/resources/test/result.png";
 
         //when
         BufferedImage result = ImageComparisonUtil.readImageFromResources(imagePath);

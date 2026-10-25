@@ -1,4 +1,4 @@
-// Modified by NuaForma: package relocation and Maven test setup; see MODIFICATIONS.md.
+// Modified by NuaForma: package relocation and Gradle test setup; see MODIFICATIONS.md.
 package dev.nuaforma.image.comparison;
 
 import static dev.nuaforma.image.comparison.ImageComparisonUtil.readImageFromResources;
@@ -121,7 +121,7 @@ public class ImageComparisonUnitTest {
 
         //when
         ImageComparison imageComparison = new ImageComparison(expected, actual)
-                .setDestination(new File("target/result.png"));
+                .setDestination(new File("build/result.png"));
 
         //then
         assertTrue(imageComparison.getDestination().isPresent());
