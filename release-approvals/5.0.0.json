@@ -3,7 +3,7 @@
   "version": "5.0.0",
   "sourceCommit": "a2e999bc95d97a0ac4ad676933e98ea339273a7a",
   "signingFingerprint": "74317C6CE9C61B80A2A1C0B40F736E8D598CB08B",
-  "approved": false,
+  "approved": true,
   "reviewer": "mrhoeve",
   "reviewedAt": "2026-10-25",
   "artifactHashes": {
