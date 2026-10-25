@@ -39,9 +39,19 @@ Unequal dimensions always produce `SIZE_MISMATCH` and `100%`, irrespective of to
 
 Classification and percentage are computed from pixels before drawing filters. When the allowance is exceeded, the result contains all detected/merged region rectangles. `minimalRectangleSize` only suppresses drawing of rectangles whose final bounding-box area is below the limit. `maximalRectangleCount` then restricts drawing to the largest remaining rectangles (nonpositive values mean no maximum). Neither option removes detected regions from the result or changes classification/percentage.
 
-`createMask` requires equal image dimensions and rejects unequal dimensions with `IllegalArgumentException`. It returns the same unfiltered detected regions when the allowance is exceeded; it returns an empty mask for an accepted comparison. An accepted result retains the existing MATCH result-object shape (including its nullable rectangle collection, tracked separately in #13). No new collection ownership guarantee is introduced.
+`createMask` requires equal image dimensions and rejects unequal dimensions with `IllegalArgumentException`. It returns the same unfiltered detected regions when the allowance is exceeded; it returns an empty mask for an accepted comparison. All library-produced results and public result factories expose a non-null rectangle collection. MATCH and SIZE_MISMATCH have empty collections; the unpopulated MISMATCH factory is also empty until regions are assigned. Every new result starts with its own mutable empty list. `setRectangles(null)` replaces it with a fresh mutable empty list without clearing a previously supplied list. A non-null list is still stored by reference: its mutability, element identity and caller aliasing are preserved. Results remain mutable DTOs, not snapshots.
 
 Thus a single differing pixel with minimum area 2 is still `MISMATCH`, with its 1x1 region and measured percentage available, even though the result image has no drawn difference outline. Exclusion drawing, colors, line widths, fills and input-image ownership retain their separate behavior; the fill-position defect remains tracked in #5.
+
+## Image input and owned resources
+
+`ImageComparisonUtil.readImageFromResources` reads an existing filesystem path first, using the existing ImageIO file path; otherwise it tries the library class loader. Missing files/resources raise `ImageNotFoundException`. Present but unsupported, invalid or unreadable input raises `ImageComparisonException` at the read boundary, including when the decoder returns null. I/O causes are preserved. A stream-close failure after decoding is reported as a read failure; if decoding already failed, a close failure remains suppressed on that primary failure.
+
+Library-generated exception messages include the input location with ISO control characters replaced by `?`, rather than input contents. Lookup still uses the original path. Decoder causes are retained for diagnosis. No format/decoder extension, global ImageIO cache/registry change or automatic input normalization is introduced.
+
+The library closes classpath streams it obtains, on success and every failure path. This is necessary because [ImageIO.read(InputStream)](https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/imageio/ImageIO.html#read(java.io.InputStream)) does not close the supplied stream. File-stream management remains with the existing ImageIO file reader.
+
+All graphics contexts created by the library share an internal try/finally ownership boundary. It disposes contexts after normal drawing, stroke/setup failures and drawing exceptions, including image conversion. Caller-owned and returned BufferedImages are never flushed or disposed and remain usable; only the graphics contexts created for the operation are released. The JDK documents [Graphics.dispose](https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/Graphics.html#dispose()) as releasing the context's system resources. Rendering geometry, colors, opacity and exact fixture pixels are unchanged by resource cleanup.
 
 ## Grouping and resource use
 
@@ -54,11 +64,11 @@ The packaged `GroupingConsumer` exercises horizontal/vertical strips, dense bloc
   -cp build/consumers/java:image-comparison/build/libs/image-comparison-4.4.1-SNAPSHOT.jar GroupingConsumer
 ```
 
-Callers must still bound decoded image dimensions and concurrent comparisons. Dimension/rectangle overflow and resource limits remain tracked in #10; this work does not claim arbitrary image sizes are supported. Streams/graphics lifecycle and decode errors remain #11/#12. Existing binary image fixtures are unchanged.
+Callers must still bound decoded image dimensions and concurrent comparisons. Dimension/rectangle overflow and resource limits remain tracked in #10; this work does not claim arbitrary image sizes are supported. Owned-stream/graphics cleanup, explicit decode failures and non-null result collections are covered by #11/#12/#13. Existing binary image fixtures are unchanged.
 
 ## Recorded smoke measurements
 
-Recorded on 25 October 2026, WSL Ubuntu on this development workstation, using the Java-17-targeted packaged core and the consumer above. JDKs: Ubuntu OpenJDK 17.0.20.1 and the installed OpenJDK 25.0.4.1. Heap 128 MiB, stack 1 MiB; two warmups and five measurements per case. Times are medians in milliseconds; allocations are current-thread cumulative allocated bytes per operation in MiB, not retained heap. JIT/escape analysis, GC, scheduling and hardware affect these results; there is no cross-JDK speed claim or performance pass threshold.
+Recorded on 25 October 2026 at commit `ca289815178dee02154698bd884fa4f01d7dec1c` (PR #19), WSL Ubuntu on this development workstation, using the Java-17-targeted packaged core and the consumer above. JDKs: Ubuntu OpenJDK 17.0.20.1 and the installed OpenJDK 25.0.4.1. Heap 128 MiB, stack 1 MiB; two warmups and five measurements per case. Times are medians in milliseconds; allocations are current-thread cumulative allocated bytes per operation in MiB, not retained heap. JIT/escape analysis, GC, scheduling and hardware affect these results; there is no cross-JDK speed claim or performance pass threshold.
 
 | Case | Shape | Threshold | Regions | Java 17 ms / allocated MiB | Java 25 ms / allocated MiB |
 | --- | --- | --- | --- | --- | --- |

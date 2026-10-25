@@ -45,13 +45,13 @@ For inspection without an assertion, use `compareImages(expected, actual) { ... 
 
 ## Engine policies and ownership
 
-Each call creates a fresh configuration and Java engine. Options and exclusions do not leak between calls. Input images and the returned Java result remain caller-owned and mutable under the core API's existing semantics; the error does not create a frozen snapshot. Do not mutate shared images concurrently with comparison.
+Each call creates a fresh configuration and Java engine. Options and exclusions do not leak between calls. Input images and the returned Java result remain caller-owned and mutable; the error does not create a frozen snapshot. Rectangle collections are never null: MATCH and SIZE_MISMATCH have empty lists. Default lists are mutable and independent; assigning a non-null list preserves its existing aliasing/mutability, and assigning null resets to a fresh empty list. Owned drawing contexts are disposed after drawing without invalidating the result image. Do not mutate shared images concurrently with comparison.
 
 The adapter follows the [core comparison contract](../docs/comparison-contract.md). Both RGB and alpha are compared, including hidden RGB under alpha zero, with no implicit background compositing. RGB keeps its Euclidean normalization; alpha distance uses its own 0-to-255 scale. Either distance exceeding `pixelTolerance` marks the pixel as different.
 
 `differencePercent` and `allowedDifferentPixelsPercent` use the same non-excluded pixel population. Excluded pixels count in neither numerator nor denominator; all excluded means zero. Accepted matches retain their measured percentage. An allowance of 25 accepts one differing pixel out of four; excluding two unchanged pixels changes that percentage to 50. Unequal dimensions always return `SIZE_MISMATCH` and 100%, irrespective of allowance, without resizing.
 
-The DSL does not expose rectangle fills or drawing filters. Core drawing filters affect only the drawn output, not mismatch classification or returned detected regions. Grouping uses a heap worklist, avoiding shape-dependent stack overflow. Callers must still bound image dimensions and concurrent work; no hostile-image resource guarantee, PDF rendering or file decoding is added. Remaining fill/resource/decode/collection issues are tracked separately (#5/#10/#11/#12/#13).
+The DSL does not expose rectangle fills or drawing filters. Core drawing filters affect only the drawn output, not mismatch classification or returned detected regions. Grouping uses a heap worklist, avoiding shape-dependent stack overflow. Callers must still bound image dimensions and concurrent work; no hostile-image resource guarantee, PDF rendering or file decoding is added. Remaining fill/large-area limitations are tracked separately (#5/#10). Java image-loading helpers reject undecodable input at the read boundary and close owned classpath streams; the DSL still accepts BufferedImages directly and adds no file-loading API.
 
 ## Documentation and verification
 

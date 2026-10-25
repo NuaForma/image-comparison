@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Reject present but undecodable image inputs at the read boundary with ImageComparisonException; preserve ImageNotFoundException for missing input, sanitize control characters in diagnostic locations and retain I/O causes (#11).
+- Close owned classpath streams and dispose all library-created drawing contexts on success/failure, including graphics setup and conversion; preserve caller/result images and rendering output (#12).
+- **Result contract:** rectangle collections are never null. Every result starts with its own mutable empty list; null setter input resets to a fresh empty list while non-null list aliasing/mutability remains unchanged (#13).
+
 - **Breaking behavior:** report the percentage of non-excluded pixels exceeding tolerance; accepted matches retain their measured percentage. Exclusions affect numerator and denominator. All excluded means zero; unequal dimensions always mean `SIZE_MISMATCH` and 100%, without resizing (#6).
 - **Breaking behavior:** compare alpha independently alongside the existing normalized RGB distance at every tolerance; compare straight ARGB including hidden RGB under alpha zero (#7).
 - **Breaking behavior:** minimum rectangle size and maximum rectangle count filter drawing only; returned regions, masks, classification and percentage retain detected differences (#8).

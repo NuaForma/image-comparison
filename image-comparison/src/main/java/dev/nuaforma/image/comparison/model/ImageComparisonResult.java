@@ -1,10 +1,11 @@
-// Modified by NuaForma: package relocation and measured percentages for accepted matches (#6); see MODIFICATIONS.md.
+// Modified by NuaForma: package relocation and measured percentages and non-null result collections (#6, #13); see MODIFICATIONS.md.
 package dev.nuaforma.image.comparison.model;
 
 import dev.nuaforma.image.comparison.ImageComparisonUtil;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -39,9 +40,9 @@ public class ImageComparisonResult {
     private float differencePercent;
 
     /**
-     * Rectangles of the differences
+     * Detected difference rectangles; never null. Every result starts with its own mutable empty list.
      */
-    private List<Rectangle> rectangles;
+    private List<Rectangle> rectangles = new ArrayList<>();
 
     /**
      * Create default instance of the {@link ImageComparisonResult} with {@link ImageComparisonState#SIZE_MISMATCH}.
@@ -163,12 +164,25 @@ public class ImageComparisonResult {
         return this;
     }
 
+    /**
+     * Returns the current non-null collection. Library-produced MATCH and SIZE_MISMATCH results are empty.
+     * Defaults are mutable and independent; an explicitly supplied list retains its own mutability/aliasing.
+     *
+     * @return current rectangle collection, never null
+     */
     public List<Rectangle> getRectangles() {
         return rectangles;
     }
 
+    /**
+     * Keeps a supplied non-null list by reference, preserving existing ownership and mutability.
+     * Null is normalized to a new mutable empty list, without clearing any previously supplied list.
+     *
+     * @param rectangles current rectangles, or null to reset to an empty collection
+     * @return this result
+     */
     public ImageComparisonResult setRectangles(List<Rectangle> rectangles) {
-        this.rectangles = rectangles;
+        this.rectangles = rectangles == null ? new ArrayList<>() : rectangles;
         return this;
     }
 }

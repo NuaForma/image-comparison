@@ -44,5 +44,12 @@ fun main() {
         allowedDifferentPixelsPercent = 10.0
     }
     check(masked.differencePercent == 10.0f)
+    check(assertImagesMatch(expected, expected).rectangles.isEmpty())
+    val sizeResult = compareImages(expected, BufferedImage(11, 10, BufferedImage.TYPE_INT_RGB))
+    check(sizeResult.rectangles.isEmpty())
+    sizeResult.setRectangles(null)
+    check(sizeResult.rectangles.isEmpty())
+    failure.comparisonResult.result.setRGB(1, 1, Color.BLUE.rgb)
+    check(actual.getRGB(1, 1) == Color.BLACK.rgb)
     println("Independent Kotlin consumer passed on " + System.getProperty("java.version"))
 }
