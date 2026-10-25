@@ -27,7 +27,7 @@ val result = assertImagesMatch(expected, actual, "invoice preview") {
 
 `expected` and `actual` are `BufferedImage` values. The example rectangle must fit inside the expected image; all coordinates are inclusive. Invalid, reversed, negative or out-of-bounds rectangles throw `IllegalArgumentException`. Tolerance must be finite in `[0,1)`; allowed percentage must be finite in `[0,100]`; threshold must be positive. These checks are deliberately stricter than silently ignored invalid Java setters.
 
-An assertion returns the Java `ImageComparisonResult` for `MATCH`. For `MISMATCH` or `SIZE_MISMATCH`, it throws `ImageComparisonAssertionError`, an `AssertionError` whose `comparisonResult` exposes the original result and difference image. Its locale-independent message includes state, image dimensions, reported RGB difference and region count. It does not include pixel data or write files. Save diagnostics only when the caller explicitly chooses to do so:
+An assertion returns the Java `ImageComparisonResult` for `MATCH`. For `MISMATCH` or `SIZE_MISMATCH`, it throws `ImageComparisonAssertionError`, an `AssertionError` whose `comparisonResult` exposes the original result and difference image. Its locale-independent message includes state, image dimensions, differing-pixel percentage and region count. It does not include pixel data or write files. Save diagnostics only when the caller explicitly chooses to do so:
 
 ```kotlin
 import dev.nuaforma.image.comparison.kotlin.ImageComparisonAssertionError
@@ -47,7 +47,11 @@ For inspection without an assertion, use `compareImages(expected, actual) { ... 
 
 Each call creates a fresh configuration and Java engine. Options and exclusions do not leak between calls. Input images and the returned Java result remain caller-owned and mutable under the core API's existing semantics; the error does not create a frozen snapshot. Do not mutate shared images concurrently with comparison.
 
-This adapter delegates comparison rather than redefining it. The core's `allowedDifferentPixelsPercent` counts pixels, while `differencePercent` reports RGB channel distance and may include excluded pixels; they are not interchangeable measures. Alpha/tolerance behavior is inherited as well. Issues #6 and #7 track these policy decisions. The first DSL does not expose rectangle fill or minimum-size filters (issues #5/#8). It does not add resource limits for hostile images (#9/#10), decode input files, render PDFs or integrate with NuaForma.
+The adapter follows the [core comparison contract](../docs/comparison-contract.md). Both RGB and alpha are compared, including hidden RGB under alpha zero, with no implicit background compositing. RGB keeps its Euclidean normalization; alpha distance uses its own 0-to-255 scale. Either distance exceeding `pixelTolerance` marks the pixel as different.
+
+`differencePercent` and `allowedDifferentPixelsPercent` use the same non-excluded pixel population. Excluded pixels count in neither numerator nor denominator; all excluded means zero. Accepted matches retain their measured percentage. An allowance of 25 accepts one differing pixel out of four; excluding two unchanged pixels changes that percentage to 50. Unequal dimensions always return `SIZE_MISMATCH` and 100%, irrespective of allowance, without resizing.
+
+The DSL does not expose rectangle fills or drawing filters. Core drawing filters affect only the drawn output, not mismatch classification or returned detected regions. Grouping uses a heap worklist, avoiding shape-dependent stack overflow. Callers must still bound image dimensions and concurrent work; no hostile-image resource guarantee, PDF rendering or file decoding is added. Remaining fill/resource/decode/collection issues are tracked separately (#5/#10/#11/#12/#13).
 
 ## Documentation and verification
 

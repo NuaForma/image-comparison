@@ -1,4 +1,4 @@
-// Modified by NuaForma: relocate packages to dev.nuaforma.image.comparison; see MODIFICATIONS.md.
+// Modified by NuaForma: package relocation and measured percentages for accepted matches (#6); see MODIFICATIONS.md.
 package dev.nuaforma.image.comparison.model;
 
 import dev.nuaforma.image.comparison.ImageComparisonUtil;
@@ -33,7 +33,8 @@ public class ImageComparisonResult {
     private ImageComparisonState imageComparisonState;
 
     /**
-     * The difference percentage between two images.
+     * Percentage of non-excluded pixels exceeding tolerance. Accepted matches may be nonzero;
+     * library-produced SIZE_MISMATCH results use 100 without resizing.
      */
     private float differencePercent;
 
@@ -85,8 +86,22 @@ public class ImageComparisonResult {
      * @return instance of the {@link ImageComparisonResult} object.
      */
     public static ImageComparisonResult defaultMatchResult(BufferedImage expected, BufferedImage actual) {
+        return defaultMatchResult(expected, actual, 0f);
+    }
+
+    /**
+     * Creates an accepted result retaining the measured differing-pixel percentage.
+     *
+     * @param expected expected image
+     * @param actual actual image
+     * @param differencePercent measured percentage, which may be nonzero for an accepted match
+     * @return accepted comparison result
+     */
+    public static ImageComparisonResult defaultMatchResult(BufferedImage expected, BufferedImage actual,
+                                                          float differencePercent) {
         return new ImageComparisonResult()
                 .setImageComparisonState(ImageComparisonState.MATCH)
+                .setDifferencePercent(differencePercent)
                 .setExpected(expected)
                 .setActual(actual)
                 .setResult(actual);

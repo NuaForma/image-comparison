@@ -7,7 +7,7 @@ Discuss API or behavior changes before implementation. Maintenance priorities ar
 
 Branch from `develop` as `codex/<fork-issue>-<topic>` and target `develop`. Keep changes focused. Preserve Java 17 APIs/bytecode, the `dev.nuaforma.image.comparison` namespace, original author credit and Apache-2.0. Mark modifications to upstream files and update MODIFICATIONS.md. Review primary release/license/security information before changing dependencies; do not add runtime dependencies without a concrete need.
 
-Run `./gradlew --no-daemon clean build verifyJavaConsumer` on JDK 17 and 25, the artifact/independent Kotlin consumer checks from README.md, and relevant synthetic regression tests. Keep all inherited tests enabled; no-test builds must fail. Record real commands/results and untested boundaries. Never regenerate expected image fixtures just to hide a regression; explain the authoring process and review all changed pixels.
+Run `./gradlew --no-daemon clean build verifyJavaConsumer verifyGroupingConsumer` on JDK 17 and 25, the artifact/independent Kotlin consumer checks from README.md, and relevant synthetic regression tests. Keep all inherited tests enabled; no-test builds must fail. Record real commands/results and untested boundaries. Never regenerate expected image fixtures just to hide a regression; explain the authoring process and review all changed pixels.
 
 Commit explicitly with `git commit -S`, using English Conventional Commits (`build: ...`, `fix: ...`, `docs: ...`, `ci: ...`) and `Refs #N` for a real issue in this fork. Verify signatures locally and require GitHub `verified=true`, `reason=valid` after pushing. Never fall back to unsigned commits or rewrite published history without explicit permission.
 

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **Breaking behavior:** report the percentage of non-excluded pixels exceeding tolerance; accepted matches retain their measured percentage. Exclusions affect numerator and denominator. All excluded means zero; unequal dimensions always mean `SIZE_MISMATCH` and 100%, without resizing (#6).
+- **Breaking behavior:** compare alpha independently alongside the existing normalized RGB distance at every tolerance; compare straight ARGB including hidden RGB under alpha zero (#7).
+- **Breaking behavior:** minimum rectangle size and maximum rectangle count filter drawing only; returned regions, masks, classification and percentage retain detected differences (#8).
+- Replace recursive difference-region traversal with a bounded-call-stack heap worklist and add constrained packaged-consumer measurements (#9).
+- Kotlin assertion diagnostics now label the metric as differing pixels rather than RGB intensity. Add a percentage-preserving MATCH factory overload while retaining existing factory signatures.
+
 - Add an optional public Kotlin comparison/assertion DSL with validated configuration and inspectable framework-independent failures (#17).
 - Migrate to a pinned Gradle Kotlin DSL build with separate Java core/Kotlin adapter artifacts, transitive consumer checks and unchanged core APIs.
 

@@ -26,5 +26,23 @@ fun main() {
     }.imageComparisonState == ImageComparisonState.MATCH)
     check(compareImages(expected, BufferedImage(11, 10, BufferedImage.TYPE_INT_RGB))
         .imageComparisonState == ImageComparisonState.SIZE_MISMATCH)
+    val alphaExpected = BufferedImage(2, 2, BufferedImage.TYPE_INT_ARGB)
+    val alphaActual = BufferedImage(2, 2, BufferedImage.TYPE_INT_ARGB).also { it.setRGB(1, 1, 0xff000000.toInt()) }
+    val alphaFailure = try {
+        assertImagesMatch(alphaExpected, alphaActual)
+        error("Alpha difference must fail")
+    } catch (failure: ImageComparisonAssertionError) {
+        failure
+    }
+    check(alphaFailure.comparisonResult.differencePercent == 25.0f)
+    check(alphaFailure.message!!.contains("different pixels 25.0000%"))
+    check(assertImagesMatch(alphaExpected, alphaActual) {
+        allowedDifferentPixelsPercent = 25.0
+    }.differencePercent == 25.0f)
+    val masked = assertImagesMatch(expected, actual) {
+        excludeRectangle(1, 0, 9, 9)
+        allowedDifferentPixelsPercent = 10.0
+    }
+    check(masked.differencePercent == 10.0f)
     println("Independent Kotlin consumer passed on " + System.getProperty("java.version"))
 }

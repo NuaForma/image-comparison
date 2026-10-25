@@ -85,6 +85,7 @@ class ImageAssertionsTest {
             assertImagesMatch(image(), image(11, 10)) { allowedDifferentPixelsPercent = 100.0 }
         }
         assertEquals(ImageComparisonState.SIZE_MISMATCH, error.comparisonResult.imageComparisonState)
+        assertEquals(100.0f, error.comparisonResult.differencePercent)
         assertTrue(error.message!!.contains("expected 10x10, actual 11x10"))
         assertTrue(error.message!!.endsWith("regions 0"))
         assertEquals(ImageComparisonState.SIZE_MISMATCH, compareImages(image(), image(11, 10)).imageComparisonState)
@@ -98,10 +99,49 @@ class ImageAssertionsTest {
             val error = assertThrows(ImageComparisonAssertionError::class.java) {
                 assertImagesMatch(image(), changed())
             }
-            assertTrue(error.message!!.contains("reported RGB difference 1.0000%"))
+            assertTrue(error.message!!.contains("different pixels 1.0000%"))
         } finally {
             Locale.setDefault(original)
         }
+    }
+
+    @Test
+    fun alphaOnlyDifferencesFailWithAnInspectablePixelPercentage() {
+        val expected = BufferedImage(2, 2, BufferedImage.TYPE_INT_ARGB)
+        val actual = BufferedImage(2, 2, BufferedImage.TYPE_INT_ARGB).also { it.setRGB(1, 1, 0xff000000.toInt()) }
+        val error = assertThrows(ImageComparisonAssertionError::class.java) { assertImagesMatch(expected, actual) }
+        assertEquals(25.0f, error.comparisonResult.differencePercent)
+        assertTrue(error.message!!.contains("different pixels 25.0000%"))
+        val accepted = assertImagesMatch(expected, actual) { allowedDifferentPixelsPercent = 25.0 }
+        assertEquals(25.0f, accepted.differencePercent)
+    }
+
+    @Test
+    fun exclusionDenominatorAndMeasuredAcceptedPercentageMatchTheCore() {
+        val expected = image(4, 1)
+        val actual = image(4, 1).also { it.setRGB(3, 0, Color.WHITE.rgb) }
+        assertThrows(ImageComparisonAssertionError::class.java) {
+            assertImagesMatch(expected, actual) {
+                excludeRectangle(0, 0, 1, 0)
+                allowedDifferentPixelsPercent = 25.0
+            }
+        }
+        val accepted = assertImagesMatch(expected, actual) {
+            excludeRectangle(0, 0, 1, 0)
+            allowedDifferentPixelsPercent = 50.0
+        }
+        assertEquals(50.0f, accepted.differencePercent)
+    }
+
+    @Test
+    fun longRegionsReturnAssertionFailuresRatherThanStackOverflow() {
+        val expected = image(65536, 1)
+        val actual = image(65536, 1).also { image ->
+            for (x in 0 until image.width) image.setRGB(x, 0, Color.WHITE.rgb)
+        }
+        val error = assertThrows(ImageComparisonAssertionError::class.java) { assertImagesMatch(expected, actual) }
+        assertEquals(100.0f, error.comparisonResult.differencePercent)
+        assertEquals(listOf(Rectangle(0, 0, 65535, 0)), error.comparisonResult.rectangles)
     }
 
     @Test

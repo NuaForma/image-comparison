@@ -37,6 +37,19 @@ public final class Java17Consumer {
         require(origin.getImageComparisonState() == ImageComparisonState.MISMATCH, "different origin pixel");
         require(origin.getRectangles().equals(Collections.singletonList(new Rectangle(0, 0, 0, 0))),
                 "origin difference marking");
+        BufferedImage alphaExpected = new BufferedImage(2, 2, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage alphaActual = new BufferedImage(2, 2, BufferedImage.TYPE_INT_ARGB);
+        alphaActual.setRGB(1, 1, 0xff000000);
+        ImageComparison alphaComparison = new ImageComparison(alphaExpected, alphaActual);
+        require(alphaComparison.compareImages().getImageComparisonState() == ImageComparisonState.MISMATCH,
+                "alpha participates at default tolerance");
+        ImageComparisonResult accepted = alphaComparison.setAllowingPercentOfDifferentPixels(25).compareImages();
+        require(accepted.getImageComparisonState() == ImageComparisonState.MATCH
+                && accepted.getDifferencePercent() == 25f, "accepted percentage retained");
+        ImageComparisonResult hidden = comparison.setMinimalRectangleSize(2).compareImages();
+        require(hidden.getImageComparisonState() == ImageComparisonState.MISMATCH
+                && hidden.getRectangles().size() == 1
+                && hidden.getResult().getRGB(5, 5) == Color.WHITE.getRGB(), "drawing filter preserves detection");
         System.out.println("Independent Java 17 consumer passed on " + System.getProperty("java.version"));
     }
 

@@ -88,14 +88,15 @@ val coreJar = project(":image-comparison").tasks.named<Jar>("jar").flatMap { it.
 val javaConsumerDirectory = layout.buildDirectory.dir("consumers/java")
 val compileJavaConsumer = tasks.register<Exec>("compileJavaConsumer") {
     dependsOn(":image-comparison:jar")
-    inputs.file("tools/consumer/Java17Consumer.java")
+    inputs.files("tools/consumer/Java17Consumer.java", "tools/consumer/GroupingConsumer.java")
     inputs.file(coreJar)
     outputs.dir(javaConsumerDirectory)
     doFirst {
         javaConsumerDirectory.get().asFile.mkdirs()
         commandLine("${System.getProperty("java.home")}/bin/javac", "--release", "17", "-cp",
             coreJar.get().asFile.absolutePath, "-d", javaConsumerDirectory.get().asFile.absolutePath,
-            rootProject.file("tools/consumer/Java17Consumer.java").absolutePath)
+            rootProject.file("tools/consumer/Java17Consumer.java").absolutePath,
+            rootProject.file("tools/consumer/GroupingConsumer.java").absolutePath)
     }
 }
 val verifyJavaConsumer = tasks.register<JavaExec>("verifyJavaConsumer") {
@@ -103,4 +104,14 @@ val verifyJavaConsumer = tasks.register<JavaExec>("verifyJavaConsumer") {
     classpath = files(javaConsumerDirectory, coreJar)
     mainClass.set("Java17Consumer")
     systemProperty("java.awt.headless", "true")
+}
+
+// Exercise thin/dense/disconnected regions with explicit stack/heap limits against the core JAR.
+tasks.register<JavaExec>("verifyGroupingConsumer") {
+    dependsOn(compileJavaConsumer)
+    classpath = files(javaConsumerDirectory, coreJar)
+    mainClass.set("GroupingConsumer")
+    systemProperty("java.awt.headless", "true")
+    maxHeapSize = "128m"
+    jvmArgs("-Xss1m")
 }

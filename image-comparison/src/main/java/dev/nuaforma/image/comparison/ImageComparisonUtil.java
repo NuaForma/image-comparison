@@ -1,4 +1,4 @@
-// Modified by NuaForma: relocate packages to dev.nuaforma.image.comparison; see MODIFICATIONS.md.
+// Modified by NuaForma: package relocation and exact differing-pixel metric (#6, #7); see MODIFICATIONS.md.
 package dev.nuaforma.image.comparison;
 
 import dev.nuaforma.image.comparison.exception.ImageComparisonException;
@@ -130,29 +130,32 @@ public final class ImageComparisonUtil {
     }
 
     /**
-     * Return the difference in percent between two buffered images.
+     * Returns the percentage of pixels whose exact ARGB values differ. This convenience
+     * method uses zero tolerance and no exclusions, unlike a configured ImageComparison.
+     * Unequal dimensions return 100 without resizing. Hidden RGB at alpha zero is compared.
      *
-     * @param img1 the first image.
-     * @param img2 the second image.
-     * @return difference percent.
+     * @param img1 the first image
+     * @param img2 the second image
+     * @return differing-pixel percentage in [0,100]
      */
     public static float getDifferencePercent(BufferedImage img1, BufferedImage img2) {
         int width = img1.getWidth();
         int height = img1.getHeight();
-
-        long diff = 0;
+        if (width != img2.getWidth() || height != img2.getHeight()) {
+            return 100f;
+        }
+        long different = 0;
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                diff += pixelDiff(img1.getRGB(x, y), img2.getRGB(x, y));
+                if (img1.getRGB(x, y) != img2.getRGB(x, y)) different++;
             }
         }
-        long maxDiff = 3L * 255 * width * height;
-
-        return (float) (100.0 * diff / maxDiff);
+        return (float) (100.0 * different / ((long) width * height));
     }
 
     /**
-     * Compare two pixels
+     * Raw Manhattan RGB channel distance, ignoring alpha. This legacy intensity helper
+     * is not used by comparison classification or the differing-pixel percentage.
      *
      * @param rgb1 the first rgb
      * @param rgb2 the second rgn

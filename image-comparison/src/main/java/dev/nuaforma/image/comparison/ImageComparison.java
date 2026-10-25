@@ -1,4 +1,4 @@
-// Modified by NuaForma: package relocation and correctness fixes (#3, #4); see MODIFICATIONS.md.
+// Modified by NuaForma: package relocation, comparison contracts and bounded-stack grouping (#3, #4, #6, #7, #8, #9); see MODIFICATIONS.md.
 package dev.nuaforma.image.comparison;
 
 import dev.nuaforma.image.comparison.model.ExcludedAreas;
@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static dev.nuaforma.image.comparison.ImageComparisonUtil.getDifferencePercent;
 import static java.util.Collections.emptyList;
 
 /**
@@ -58,7 +57,8 @@ public class ImageComparison {
     private int regionCount = counter;
 
     /**
-     * The number of the minimal rectangle size. Count as (width x height).
+     * Minimum area (width x height) for drawing a difference rectangle only.
+     * Does not change match classification, returned regions, masks or difference percentage.
      */
     private Integer minimalRectangleSize = 1;
 
@@ -70,8 +70,11 @@ public class ImageComparison {
     private Integer maximalRectangleCount = -1;
 
     /**
-     * Level of the pixel tolerance. By default, it's 0.1 -> 10% difference.
-     * The value can be set from 0.0 to 0.99.
+     * Pixel distance tolerance in [0,1), default 0.1. RGB distance uses Euclidean
+     * normalization by 255 * sqrt(3); alpha uses absolute distance divided by 255.
+     * A pixel differs if either distance exceeds the tolerance. Zero compares exact ARGB.
+     * Straight ARGB values from getRGB are compared, including hidden RGB at alpha zero;
+     * no implicit background compositing is performed.
      */
     private double pixelToleranceLevel = 0.1;
 
@@ -109,9 +112,9 @@ public class ImageComparison {
     private boolean drawExcludedRectangles = false;
 
     /**
-     * The difference in percent between two images.
+     * Percentage of non-excluded pixels exceeding the configured tolerance; measured on every call.
      */
-    private float differencePercent;
+    private double differencePercent;
 
     /**
      * Flag for filling comparison difference rectangles.
@@ -186,6 +189,11 @@ public class ImageComparison {
     }
 
     /**
+     * Compares non-excluded pixels and returns their differing-pixel percentage in [0,100].
+     * Excluded pixels count in neither numerator nor denominator; all excluded means zero.
+     * MATCH uses the inclusive allowed percentage and retains the measured percentage.
+     * Unequal dimensions yield SIZE_MISMATCH and 100 percent without resizing, irrespective
+     * of exclusions or allowed percentage. Drawing filters affect only the result image.
      * Draw rectangles which cover the regions of the difference pixels.
      *
      * @return the result of the drawing.
@@ -194,14 +202,13 @@ public class ImageComparison {
 
         // check that the images have the same size
         if (isImageSizesNotEqual(expected, actual)) {
-            BufferedImage actualResized = ImageComparisonUtil.resize(actual, expected.getWidth(), expected.getHeight());
-            return ImageComparisonResult.defaultSizeMisMatchResult(expected, actual, getDifferencePercent(actualResized, expected));
+            return ImageComparisonResult.defaultSizeMisMatchResult(expected, actual, 100f);
         }
 
         List<Rectangle> rectangles = populateRectangles();
 
         if (rectangles.isEmpty()) {
-            ImageComparisonResult matchResult = ImageComparisonResult.defaultMatchResult(expected, actual);
+            ImageComparisonResult matchResult = ImageComparisonResult.defaultMatchResult(expected, actual, (float) differencePercent);
             if (drawExcludedRectangles) {
                 matchResult.setResult(drawRectangles(rectangles));
                 saveImageForDestination(matchResult.getResult());
@@ -211,7 +218,7 @@ public class ImageComparison {
 
         BufferedImage resultImage = drawRectangles(rectangles);
         saveImageForDestination(resultImage);
-        return ImageComparisonResult.defaultMisMatchResult(expected, actual, getDifferencePercent(actual, expected))
+        return ImageComparisonResult.defaultMisMatchResult(expected, actual, (float) differencePercent)
                 .setResult(resultImage)
                 .setRectangles(rectangles);
     }
@@ -234,10 +241,12 @@ public class ImageComparison {
      */
     private long populateTheMatrixOfTheDifferences() {
         long countOfDifferentPixels = 0;
+        long comparedPixelCount = 0;
         matrix = new int[expected.getHeight()][expected.getWidth()];
         for (int y = 0; y < expected.getHeight(); y++) {
             for (int x = 0; x < expected.getWidth(); x++) {
                 if (!excludedAreas.contains(new Point(x, y))) {
+                    comparedPixelCount++;
                     if (isDifferentPixels(expected.getRGB(x, y), actual.getRGB(x, y))) {
                         matrix[y][x] = 1;
                         countOfDifferentPixels++;
@@ -245,6 +254,8 @@ public class ImageComparison {
                 }
             }
         }
+        differencePercent = comparedPixelCount == 0 ? 0.0
+                : 100.0 * countOfDifferentPixels / comparedPixelCount;
         return countOfDifferentPixels;
     }
 
@@ -260,6 +271,12 @@ public class ImageComparison {
         if (expectedRgb == actualRgb) {
             return false;
         } else if (pixelToleranceLevel == 0.0) {
+            return true;
+        }
+
+        int alpha1 = (expectedRgb >>> 24) & 0xff;
+        int alpha2 = (actualRgb >>> 24) & 0xff;
+        if (Math.abs(alpha2 - alpha1) > pixelToleranceLevel * 255) {
             return true;
         }
 
@@ -288,14 +305,14 @@ public class ImageComparison {
             return emptyList();
         }
 
-        if (isAllowedPercentOfDifferentPixels(countOfDifferentPixels)) {
+        if (isAllowedPercentOfDifferentPixels()) {
             return emptyList();
         }
         groupRegions();
         List<Rectangle> rectangles = new ArrayList<>();
         while (counter <= regionCount) {
             Rectangle rectangle = createRectangle();
-            if (!rectangle.equals(Rectangle.createDefault()) && rectangle.size() >= minimalRectangleSize) {
+            if (!rectangle.equals(Rectangle.createDefault())) {
                 rectangles.add(rectangle);
             }
             counter++;
@@ -304,17 +321,9 @@ public class ImageComparison {
         return mergeRectangles(mergeRectangles(rectangles));
     }
 
-    /**
-     * Say if provided {@param countOfDifferentPixels} is allowed for {@link ImageComparisonState#MATCH} state.
-     *
-     * @param countOfDifferentPixels the count of the different pixels in comparison.
-     * @return true, if percent of different pixels lower or equal {@link ImageComparison#allowingPercentOfDifferentPixels},
-     * false - otherwise.
-     */
-    private boolean isAllowedPercentOfDifferentPixels(long countOfDifferentPixels) {
-        long totalPixelCount = matrix.length * matrix[0].length;
-        double actualPercentOfDifferentPixels = ((double) countOfDifferentPixels / (double) totalPixelCount) * 100;
-        return actualPercentOfDifferentPixels <= allowingPercentOfDifferentPixels;
+    /** Whether the measured percentage is within the inclusive acceptance limit. */
+    private boolean isAllowedPercentOfDifferentPixels() {
+        return differencePercent <= allowingPercentOfDifferentPixels;
     }
 
     /**
@@ -423,16 +432,19 @@ public class ImageComparison {
      * @param graphics   prepared {@link Graphics2D}object.
      */
     private void drawRectanglesOfDifferences(List<Rectangle> rectangles, Graphics2D graphics) {
+        List<Rectangle> visibleRectangles = rectangles.stream()
+                .filter(rectangle -> rectangle.size() >= minimalRectangleSize)
+                .collect(Collectors.toList());
         List<Rectangle> rectanglesForDraw;
         graphics.setColor(this.differenceRectangleColor);
 
-        if (maximalRectangleCount > 0 && maximalRectangleCount < rectangles.size()) {
-            rectanglesForDraw = rectangles.stream()
+        if (maximalRectangleCount > 0 && maximalRectangleCount < visibleRectangles.size()) {
+            rectanglesForDraw = visibleRectangles.stream()
                     .sorted(Comparator.comparing(Rectangle::size))
-                    .skip(rectangles.size() - maximalRectangleCount)
+                    .skip(visibleRectangles.size() - maximalRectangleCount)
                     .collect(Collectors.toList());
         } else {
-            rectanglesForDraw = new ArrayList<>(rectangles);
+            rectanglesForDraw = visibleRectangles;
         }
 
         draw(graphics, rectanglesForDraw);
@@ -522,50 +534,50 @@ public class ImageComparison {
     }
 
     /**
-     * The recursive method which go to all directions and finds difference
-     * in binary matrix using {@code threshold} for setting max distance between values which equal "1".
-     * and set the {@code groupCount} to matrix.
-     *
-     * @param x the value of the X-coordinate.
-     * @param y the value of the Y-coordinate.
+     * Visits the same five directional rays as the original grouping algorithm using a heap worklist.
+     * A pixel is labelled when queued, so each different pixel enters the worklist at most once.
+     * Call-stack use is constant; auxiliary heap use is O(number of differing pixels).
      */
     private void joinToRegion(int x, int y) {
-        if (isJumpRejected(x, y)) {
-            return;
-        }
-
-        matrix[y][x] = regionCount;
-
-        for (int i = 0; i < threshold; i++) {
-            joinToRegion(x + 1 + i, y);
-            joinToRegion(x, y + 1 + i);
-
-            joinToRegion(x + 1 + i, y - 1 - i);
-            joinToRegion(x - 1 - i, y + 1 + i);
-            joinToRegion(x + 1 + i, y + 1 + i);
+        Deque<Point> pending = new ArrayDeque<>();
+        queueRegionPixel(x, y, pending);
+        int maxJump = Math.min(threshold, Math.max(matrix.length - 1, matrix[0].length - 1));
+        while (!pending.isEmpty()) {
+            Point point = pending.removeLast();
+            for (int i = 0; i < maxJump; i++) {
+                long distance = (long) i + 1;
+                queueRegionPixel(point.x + distance, point.y, pending);
+                queueRegionPixel(point.x, point.y + distance, pending);
+                queueRegionPixel(point.x + distance, point.y - distance, pending);
+                queueRegionPixel(point.x - distance, point.y + distance, pending);
+                queueRegionPixel(point.x + distance, point.y + distance, pending);
+            }
         }
     }
 
+    private void queueRegionPixel(long x, long y, Deque<Point> pending) {
+        if (y < 0 || y >= matrix.length || x < 0 || x >= matrix[(int) y].length
+                || matrix[(int) y][(int) x] != 1) {
+            return;
+        }
+        matrix[(int) y][(int) x] = regionCount;
+        pending.addLast(new Point((int) x, (int) y));
+    }
+
     /**
-     * Returns the list of rectangles that would be drawn as a diff image.
+     * Returns all detected regions when the percentage exceeds the acceptance limit.
+     * Drawing filters do not suppress mask regions. An accepted comparison returns an empty mask.
      * If you submit two images that are the same barring the parts you want to excludedAreas you get a list of
      * rectangles that can be used as said excludedAreas
      *
      * @return List of {@link Rectangle}
+     * @throws IllegalArgumentException if image dimensions differ; no shared mask grid exists
      */
     public List<Rectangle> createMask() {
+        if (isImageSizesNotEqual(expected, actual)) {
+            throw new IllegalArgumentException("Mask creation requires equal image dimensions");
+        }
         return populateRectangles();
-    }
-
-    /**
-     * Check next step valid or not.
-     *
-     * @param x X-coordinate of the image.
-     * @param y Y-coordinate of the image
-     * @return true if jump rejected, otherwise false.
-     */
-    private boolean isJumpRejected(int x, int y) {
-        return y < 0 || y >= matrix.length || x < 0 || x >= matrix[y].length || matrix[y][x] != 1;
     }
 
     public double getPixelToleranceLevel() {
@@ -581,7 +593,7 @@ public class ImageComparison {
     }
 
     private double calculateDifferenceConstant() {
-        return Math.pow(pixelToleranceLevel * Math.sqrt(Math.pow(255, 2) * 3), 2);
+        return 3 * Math.pow(pixelToleranceLevel * 255, 2);
     }
 
     public boolean isDrawExcludedRectangles() {

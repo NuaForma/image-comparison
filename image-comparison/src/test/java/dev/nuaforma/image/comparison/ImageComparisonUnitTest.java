@@ -1,4 +1,4 @@
-// Modified by NuaForma: package relocation and Gradle test setup; see MODIFICATIONS.md.
+// Modified by NuaForma: package relocation, Gradle setup and approved percentage contracts (#6); see MODIFICATIONS.md.
 package dev.nuaforma.image.comparison;
 
 import static dev.nuaforma.image.comparison.ImageComparisonUtil.readImageFromResources;
@@ -437,7 +437,8 @@ public class ImageComparisonUnitTest {
 
         //then
         assertEquals(MISMATCH, imageComparisonResult.getImageComparisonState());
-        assertEquals(0.4274517595767975, imageComparisonResult.getDifferencePercent());
+        // Independently counted: 4,272 pixels exceed default tolerance in this 985x701 fixture.
+        assertEquals((float) (100.0 * 4272 / (985L * 701)), imageComparisonResult.getDifferencePercent());
         assertImagesEqual(expectedImage, imageComparisonResult.getResult());
     }
 
@@ -518,8 +519,8 @@ public class ImageComparisonUnitTest {
 
         //then
         assertEquals(SIZE_MISMATCH, imageComparisonResult.getImageComparisonState());
-        boolean differenceLessThan2 = imageComparisonResult.getDifferencePercent() < 2;
-        assertTrue(differenceLessThan2);
+        // Unequal dimensions are a structural 100% mismatch, without interpolation.
+        assertEquals(100f, imageComparisonResult.getDifferencePercent());
     }
 
     private void assertImagesEqual(BufferedImage expected, BufferedImage actual) {
