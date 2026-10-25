@@ -13,6 +13,10 @@ def command(arguments, output, env=None):
     result = subprocess.run(arguments, cwd=ROOT, env=env, capture_output=True, text=True, timeout=600)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(result.stdout+result.stderr)
+    if result.returncode != 0:
+        # These consumers run without signing/Portal/GitHub secrets and use public-only settings.
+        print("Unsigned consumer failure ("+output.name+"):\n"+
+              "\n".join((result.stdout+result.stderr).splitlines()[-60:])[-8000:], flush=True)
     require(result.returncode == 0, "Independent consumer failed; inspect the unsigned local log")
     return result.stdout
 
