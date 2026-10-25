@@ -8,3 +8,8 @@ Licensed under the Apache License, Version 2.0; see LICENSE.
 The upstream v4.4.0 tree contains no NOTICE file.
 NuaForma modifications are identified in MODIFICATIONS.md and file headers.
 Original authorship and history are retained; no upstream endorsement is implied.
+
+Gradle wrapper scripts and JAR are generated from Gradle 9.7.1,
+licensed under Apache-2.0: https://github.com/gradle/gradle.
+The optional Kotlin adapter uses the separately distributed Kotlin standard library
+and JetBrains annotations under Apache-2.0; these are not shaded into this library.

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>NuaForma Kotlin Image Assertions API</title>
+<style>body{font:16px/1.6 system-ui,sans-serif;max-width:64rem;margin:3rem auto;padding:0 1rem}code,pre{background:#f1f3f5}pre{padding:1rem;overflow:auto}td,th{text-align:left;padding:.5rem;border-bottom:1px solid #ddd}h2{margin-top:2rem}</style></head>
+<body><h1>NuaForma Kotlin Image Assertions</h1>
+<p>Package <code>dev.nuaforma.image.comparison.kotlin</code>. Optional JVM test API, requiring Java 17. Add only <code>dev.nuaforma:image-comparison-kotlin</code>; core, Kotlin standard library and annotations are transitive. No release is published yet.</p>
+<h2>Functions</h2>
+<pre>fun compareImages(expected: BufferedImage, actual: BufferedImage,
+    configure: ImageComparisonOptions.() -&gt; Unit = {}): ImageComparisonResult
+
+fun assertImagesMatch(expected: BufferedImage, actual: BufferedImage,
+    message: String? = null,
+    configure: ImageComparisonOptions.() -&gt; Unit = {}): ImageComparisonResult</pre>
+<p>Each call uses a fresh Java engine. <code>compareImages</code> returns every result state. <code>assertImagesMatch</code> returns MATCH or throws <code>ImageComparisonAssertionError</code> for MISMATCH and SIZE_MISMATCH. A configuration exception propagates unchanged. Invalid options throw <code>IllegalArgumentException</code>. Neither function writes files.</p>
+<h2>ImageComparisonOptions</h2>
+<p>The constructor is internal; configure it through a function's receiver lambda, marked with the public <code>@ImageComparisonDsl</code> annotation.</p>
+<table><tr><th>Member</th><th>Default and contract</th></tr>
+<tr><td><code>pixelTolerance: Double</code></td><td>0.1; finite [0,1). Zero uses the engine's exact packed-pixel comparison.</td></tr>
+<tr><td><code>allowedDifferentPixelsPercent: Double</code></td><td>0.0; finite [0,100]. Counts pixels according to core rules, not the RGB difference metric.</td></tr>
+<tr><td><code>threshold: Int</code></td><td>5; positive grouping distance in pixels.</td></tr>
+<tr><td><code>excludeRectangle(minX: Int, minY: Int, maxX: Int, maxY: Int)</code></td><td>Inclusive nonnegative ordered coordinates, entirely inside the expected image. Bounds are checked before comparison.</td></tr></table>
+<h2>ImageComparisonAssertionError</h2>
+<p>Extends <code>AssertionError</code>; its constructor is internal. The public <code>comparisonResult: ImageComparisonResult</code> retains the mutable Java result and difference image for caller-controlled handling. The message contains optional context, state, dimensions, reported RGB difference and region count. It is locale-independent and includes no image contents.</p>
+<h2>Policies and limits</h2>
+<p>Core alpha, percentage and exclusion policies are inherited unchanged. Reported RGB percentage and allowed differing-pixel percentage differ; excluded pixels may still affect the reported metric. Rectangle fills/visual filters are not exposed. Inputs/results retain core ownership semantics and are not immutable snapshots. Concurrent input mutation is unsupported. No resource-limit or file-decoding guarantee is added.</p>
+<p>See <a href="README.md">the usage guide</a> and KDoc in the sources archive. Apache-2.0; project origin and modifications are recorded in <code>META-INF/LICENSE</code>, <code>META-INF/NOTICE</code> and <code>META-INF/MODIFICATIONS.md</code>.</p>
+</body></html>

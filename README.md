@@ -2,27 +2,61 @@
 
 An independently maintained Apache-2.0 fork of [romankh3/image-comparison](https://github.com/romankh3/image-comparison), created from [v4.4.0](https://github.com/romankh3/image-comparison/tree/v4.4.0). Original author: Roman Beskrovnyi and upstream contributors. The original logo remains credited to [@dee-y](https://github.com/dee-y).
 
-Compare two `BufferedImage` values, classify matches and size mismatches, mark differing regions and exclude configured rectangles. Production code uses standard Java/AWT only, with **no external runtime dependencies**. This is a generic image comparison library; PDF rendering and product integration are outside its scope.
+Compare two `BufferedImage` values, classify matches and size mismatches, mark differing regions and exclude configured rectangles. The Java core uses standard Java/AWT only, with **no external runtime dependencies**. This is a generic image comparison library; PDF rendering and product integration are outside its scope.
+
+## Why this fork exists
+
+We needed a dependable image-comparison library for our testing workflows and wanted to build on the useful work already available in this project. For our use, we also needed predictable maintenance, verified fixes and a release process we could manage ourselves.
+
+When this fork was created on 25 October 2026, the latest published upstream release was [v4.4.0, dated 28 March 2021](https://github.com/romankh3/image-comparison/releases/tag/v4.4.0), and several [long-standing pull requests](https://github.com/romankh3/image-comparison/pulls) remained open. Given that release gap and the contributions still awaiting integration, we felt an independently maintained fork was the most practical way to meet our requirements and take responsibility for future fixes and releases.
+
+We appreciate the original author's and contributors' work. Their authorship, Git history and Apache-2.0 licensing are retained, and our modifications are identified separately. NuaForma's maintenance and release decisions are independent of upstream.
 
 ## Status and compatibility
 
-No NuaForma release has been published. The intended Maven coordinates are `dev.nuaforma:image-comparison`; the development POM uses `4.4.1-SNAPSHOT`. The earlier 4.4.1 release idea must be reassessed before publication because the Java baseline and package changes break compatibility with upstream. The snapshot number is a development placeholder, not a release promise. No namespace claim or package publication is implied. Upstream tags identify upstream releases only.
+No NuaForma release has been published. The intended Maven coordinates are `dev.nuaforma:image-comparison` and the optional `dev.nuaforma:image-comparison-kotlin`; the development POM uses `4.4.1-SNAPSHOT`. The earlier 4.4.1 release idea must be reassessed before publication because the Java baseline and package changes break compatibility with upstream. The snapshot number is a development placeholder, not a release promise. No namespace claim or package publication is implied. Upstream tags identify upstream releases only.
 
-Java 17 is the minimum supported runtime and API/bytecode target. Java 8 is unsupported. Production classes now use `dev.nuaforma.image.comparison` instead of `com.github.romankh3.image.comparison`. Method shapes are preserved; approved behavior corrections are recorded in CHANGELOG.md. The package relocation breaks source/binary compatibility and requires callers to update imports and recompile. The runtime baseline is also intentionally breaking. Build and tests require JDK 17 or later; CI checks JDK 17 and 25 and runs a standalone packaged consumer on both, including the Java 17 minimum for artifacts built on Java 25. Test libraries do not become runtime dependencies. See [maintenance and compatibility](docs/maintenance.md) for exact boundaries and verification.
+Java 17 is the minimum supported runtime and API/bytecode target. Java 8 is unsupported. Production classes now use `dev.nuaforma.image.comparison` instead of `com.github.romankh3.image.comparison`. Method shapes are preserved; approved behavior corrections are recorded in CHANGELOG.md. The package relocation breaks source/binary compatibility and requires callers to update imports and recompile. The runtime baseline is also intentionally breaking. Build and tests require JDK 17 or later; CI checks JDK 17 and 25 and runs a standalone packaged consumer on both, including the Java 17 minimum for artifacts built on Java 25. Test libraries do not become runtime dependencies. Kotlin is optional and is not required by Java-only consumers. See [maintenance and compatibility](docs/maintenance.md) for exact boundaries and verification.
+
+## Modules and Kotlin tests
+
+- `image-comparison`: the existing Java library; no external runtime dependencies.
+- `image-comparison-kotlin`: the optional [Kotlin assertion DSL](image-comparison-kotlin/README.md). A consumer declares **only this artifact**, and the core, Kotlin standard library and required annotations arrive transitively. It is test-framework independent.
+
+```kotlin
+import dev.nuaforma.image.comparison.kotlin.assertImagesMatch
+
+assertImagesMatch(expected, actual, "preview") {
+    pixelTolerance = 0.1
+    excludeRectangle(10, 20, 100, 200)
+}
+```
+
+For Kotlin users, the single dependency is:
+
+```kotlin
+dependencies {
+    testImplementation("dev.nuaforma:image-comparison-kotlin:4.4.1-SNAPSHOT")
+}
+```
+
+This brings in `image-comparison`, Kotlin stdlib and required annotations transitively; no separate core declaration is needed. These coordinates are not published yet.
+
+The rectangle is inclusive and must fit inside `expected`. Mismatches throw an inspectable `AssertionError`; the API never writes diagnostics automatically. No Kotlin artifact is published yet. See the module guide for allowed percentages, validation, result ownership and inherited core-policy limitations.
 
 ## Build
 
-Use the checked-in Maven wrapper (Maven 3.10.0; download integrity pinned). The first run needs access to Maven Central. Select the build JDK with `JAVA_HOME`.
+Use the checked-in Gradle wrapper and select an installed JDK 17 or 25 with `JAVA_HOME`. Production Java and Kotlin target Java 17 APIs/bytecode independently of the JDK that runs the build/tests. No JDK is downloaded automatically. The first run requires access to Gradle distribution repositories, the official Gradle Plugin Portal and Maven Central.
 
 ```sh
-./mvnw --batch-mode --no-transfer-progress clean verify
-python3 tools/verify-artifact.py target/image-comparison-4.4.1-SNAPSHOT.jar
-mkdir -p target/consumer
-javac --release 17 -cp target/image-comparison-4.4.1-SNAPSHOT.jar -d target/consumer tools/consumer/Java17Consumer.java
-java -Djava.awt.headless=true -cp target/consumer:target/image-comparison-4.4.1-SNAPSHOT.jar Java17Consumer
+./gradlew --no-daemon clean build verifyJavaConsumer publishAllPublicationsToVerificationRepository
+./gradlew --no-daemon -p tools/consumer-kotlin run
+./gradlew --no-daemon -p tools/consumer-kotlin run -PpomOnly=true
 ```
 
-Use `mvnw.cmd` and the platform classpath separator when appropriate. The Maven build replaces the old parallel Gradle/Travis/Bintray/Coveralls configuration, retained in Git history. `verify` builds the binary, sources and Javadoc archives without uploading anything.
+The first command builds/tests both modules, checks artifact boundaries and runs a Java consumer against only the packaged core. It writes artifacts to the ignored local `build/verification-repository` solely for verification; no external repository or credentials are configured. The independent Kotlin project declares only the Kotlin artifact and checks its transitives twice: Gradle metadata and POM-only resolution. No source-project substitution is allowed.
+
+Use `gradlew.bat` and the platform classpath separator where appropriate. Run archive reproducibility/Java-17 runtime checks as described in [maintenance](docs/maintenance.md). The approved Gradle migration replaces the Maven build; historical build configurations remain in Git history. No release, namespace claim or upload is performed by these commands.
 
 ## Example
 

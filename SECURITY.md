@@ -7,3 +7,5 @@ Report vulnerabilities through [GitHub private vulnerability reporting](https://
 Include the commit/version, JDK, operating system, minimal synthetic reproducer, impact and resource usage. Remove private images, credentials and personal data. Image decoding and region grouping can consume substantial memory/CPU; callers should bound decoded image dimensions and concurrent work. This maintenance baseline does not establish limits for hostile inputs or claim a security audit.
 
 Maintain dependencies and build tools through reviewed updates. CI has read-only repository permissions and no publishing credentials. Publication and namespace registration require separate authorization.
+
+The optional Kotlin test DSL adds no decoder, renderer or automatic file writing. It delegates to the core's existing image semantics and resource behavior. External Gradle dependencies use reviewed SHA-256 verification; this is repository-byte verification, not a complete code or vulnerability audit. Kotlin assertion diagnostics include only caller context, dimensions, state and aggregate metrics. Keep private image contents out of manually saved/shared diagnostics.

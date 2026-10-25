@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add an optional public Kotlin comparison/assertion DSL with validated configuration and inspectable framework-independent failures (#17).
+- Migrate to a pinned Gradle Kotlin DSL build with separate Java core/Kotlin adapter artifacts, transitive consumer checks and unchanged core APIs.
+
 - Preserve single-pixel differences at (0,0) when merging difference rectangles (#3).
 - Reset per-operation region counters so sequential comparisons and mask creation remain consistent (#4).
 

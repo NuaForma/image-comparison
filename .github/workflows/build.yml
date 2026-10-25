@@ -24,23 +24,26 @@ jobs:
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
-      - name: Build and run inherited tests
-        run: ./mvnw --batch-mode --no-transfer-progress clean verify
+      - name: Check dependency review receipts
+        run: python3 tools/review-dependency-checksums.py
+      - name: Build and qualify both libraries
+        run: |
+          ./gradlew --no-daemon --no-build-cache clean build verifyJavaConsumer publishAllPublicationsToVerificationRepository
+          python3 tools/verify-test-results.py
+          ./gradlew --no-daemon -p tools/consumer-kotlin run
+          ./gradlew --no-daemon -p tools/consumer-kotlin run -PpomOnly=true
       - name: Check reproducible archives on the same JDK
         run: |
-          sha256sum target/*.jar > target/archives.sha256
-          cp target/archives.sha256 /tmp/image-comparison-archives.sha256
-          ./mvnw --batch-mode --no-transfer-progress clean verify
+          sha256sum image-comparison*/build/libs/*.jar > /tmp/image-comparison-archives.sha256
+          ./gradlew --no-daemon --no-build-cache clean build verifyJavaConsumer publishAllPublicationsToVerificationRepository
           sha256sum --check /tmp/image-comparison-archives.sha256
-      - name: Inspect artifact and compile independent Java 17 consumer
-        run: |
-          python3 tools/verify-artifact.py target/image-comparison-4.4.1-SNAPSHOT.jar
-          mkdir -p target/consumer
-          javac --release 17 -cp target/image-comparison-4.4.1-SNAPSHOT.jar -d target/consumer tools/consumer/Java17Consumer.java
-          java -Djava.awt.headless=true -cp target/consumer:target/image-comparison-4.4.1-SNAPSHOT.jar Java17Consumer
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: '17'
-      - name: Run packaged library and independent consumer on Java 17
-        run: java -Djava.awt.headless=true -cp target/consumer:target/image-comparison-4.4.1-SNAPSHOT.jar Java17Consumer
+      - name: Run unchanged packaged libraries on Java 17
+        run: |
+          java -Djava.awt.headless=true -cp build/consumers/java:image-comparison/build/libs/image-comparison-4.4.1-SNAPSHOT.jar Java17Consumer
+          ./gradlew --no-daemon -p tools/consumer-kotlin run
+          ./gradlew --no-daemon -p tools/consumer-kotlin run -PpomOnly=true
+          sha256sum --check /tmp/image-comparison-archives.sha256
