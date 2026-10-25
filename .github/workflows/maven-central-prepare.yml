@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: image-comparison-central-release
@@ -31,6 +32,8 @@ jobs:
         with:
           persist-credentials: false
       - name: Verify actual environment policy before private secret use
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: python3 tools/release/policy.py
       - name: Select pinned Java 17 publication toolchain
         uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
