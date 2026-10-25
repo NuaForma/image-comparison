@@ -18,6 +18,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: image-comparison-central-release
@@ -41,6 +42,8 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Verify protected main, signed source and exact eight-artifact human review
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           python3 tools/release/policy.py --version "$RELEASE_VERSION" --review "release-approvals/$RELEASE_VERSION.json"
       - name: Preserve current release policy, then check out the exact approved tagged source
@@ -79,6 +82,7 @@ jobs:
           python3 "$RUNNER_TEMP/image-comparison-release-policy/bundle.py" --repository build/verification-repository --version "$RELEASE_VERSION" --public-key build/release-review/public-key.asc --output build/release-review/central.zip
       - name: Upload once for validation, never automatically publish
         env:
+          GH_TOKEN: ${{ github.token }}
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
         run: |
