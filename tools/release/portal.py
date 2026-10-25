@@ -118,8 +118,14 @@ def status(identity, review, token, opener):
     data = payload(urllib.request.Request(BASE+"status?id="+identity, data=b"", method="POST",
                    headers={"Authorization": "Bearer "+token}), opener, 1024*1024)
     result = json.loads(data)
+    state = result.get("deploymentState")
+    safe_state = state if state in {"PENDING", "VALIDATING", "VALIDATED", "PUBLISHING", "PUBLISHED", "FAILED"} else "UNKNOWN"
+    coordinates = result.get("purls", [])
+    require(isinstance(coordinates, list) and all(isinstance(item, str) for item in coordinates), "Malformed deployment coordinates")
     require(result.get("deploymentId") == identity and set(result.get("purls", [])) == {
-        "pkg:maven/dev.nuaforma/"+module+"@"+review["version"] for module in MODULES}, "Deployment identity/coordinates differ from review")
+        "pkg:maven/dev.nuaforma/"+module+"@"+review["version"] for module in MODULES},
+        "Deployment identity/coordinates differ from review (state="+safe_state+
+        ", identityMatches="+str(result.get("deploymentId") == identity)+", coordinateCount="+str(len(coordinates))+")")
     return result
 
 
