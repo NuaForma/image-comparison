@@ -32,7 +32,7 @@ public class ImageComparisonUnitTest {
         //given
         BufferedImage expectedResultImage = readImageFromResources("result.png");
 
-        File file = new File("target/test-images/result.png");
+        File file = new File("build/test-images/result.png");
 
         //when
         ImageComparison imageComparison = new ImageComparison("expected.png", "actual.png");
@@ -212,7 +212,7 @@ public class ImageComparisonUnitTest {
         BufferedImage actual = readImageFromResources("actual#11.png");
 
         ImageComparison imageComparison = new ImageComparison(expected, actual,
-                new File("target/test-images/result.png"))
+                new File("build/test-images/result.png"))
                 .setRectangleLineWidth(10);
 
         //when

@@ -11,3 +11,4 @@ target/*
 # Modified by NuaForma: workstation settings and generated test output.
 AGENTS.local.md
 /result.png
+**/target/
