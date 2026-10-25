@@ -1,0 +1,74 @@
+name: Build
+on:
+  push:
+    branches: [develop, main, 'codex/**']
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    name: Build (Java ${{ matrix.java }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['17', '25']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - name: Check dependency review receipts
+        run: python3 tools/review-dependency-checksums.py
+      - name: Build and qualify both libraries
+        run: |
+          ./gradlew --no-daemon --no-build-cache clean build verifyJavaConsumer verifyGroupingConsumer publishAllPublicationsToVerificationRepository
+          python3 tools/verify-test-results.py
+          ./gradlew --no-daemon -p tools/consumer-kotlin run
+          ./gradlew --no-daemon -p tools/consumer-kotlin run -PpomOnly=true
+      - name: Check reproducible archives on the same JDK
+        run: |
+          sha256sum image-comparison*/build/libs/*.jar > /tmp/image-comparison-archives.sha256
+          ./gradlew --no-daemon --no-build-cache clean build verifyJavaConsumer verifyGroupingConsumer publishAllPublicationsToVerificationRepository
+          sha256sum --check /tmp/image-comparison-archives.sha256
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Run unchanged packaged libraries on Java 17
+        run: |
+          CANDIDATE_VERSION=$(python3 -c 'import sys; sys.path.insert(0, "tools/release"); from publications import project_version; print(project_version())')
+          java -Djava.awt.headless=true -cp "build/consumers/java:image-comparison/build/libs/image-comparison-$CANDIDATE_VERSION.jar" Java17Consumer
+          java -Xss1m -Xmx128m -Djava.awt.headless=true -cp "build/consumers/java:image-comparison/build/libs/image-comparison-$CANDIDATE_VERSION.jar" GroupingConsumer
+          ./gradlew --no-daemon -p tools/consumer-kotlin run
+          ./gradlew --no-daemon -p tools/consumer-kotlin run -PpomOnly=true
+          sha256sum --check /tmp/image-comparison-archives.sha256
+
+  release-tools:
+    name: Release preparation (disposable keys, no upload)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17.0.20+1'
+      - name: Offline release gates, also with optimization enabled
+        run: |
+          python3 -m unittest discover -s tools/release
+          python3 -O -m unittest discover -s tools/release
+      - name: Disposable in-memory signing, verification and negative cases
+        run: python3 tools/release/local_signing_qa.py --output build/signing-qa
+      - name: Independent Maven and Gradle consumers of the synthetic candidate
+        run: python3 tools/release/consumers.py --repository build/verification-repository --version 0.0.0-local.1 --output build/release-consumers

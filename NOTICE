@@ -1,0 +1,15 @@
+NuaForma Image Comparison
+An independently maintained fork of romankh3/image-comparison.
+Original project: https://github.com/romankh3/image-comparison
+Original author: Roman Beskrovnyi and upstream contributors.
+Original logo design credited to @dee-y in the upstream README.
+
+Licensed under the Apache License, Version 2.0; see LICENSE.
+The upstream v4.4.0 tree contains no NOTICE file.
+NuaForma modifications are identified in MODIFICATIONS.md and file headers.
+Original authorship and history are retained; no upstream endorsement is implied.
+
+Gradle wrapper scripts and JAR are generated from Gradle 9.7.1,
+licensed under Apache-2.0: https://github.com/gradle/gradle.
+The optional Kotlin adapter uses the separately distributed Kotlin standard library
+and JetBrains annotations under Apache-2.0; these are not shaded into this library.

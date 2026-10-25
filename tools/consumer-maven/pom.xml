@@ -1,0 +1,7 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>dev.nuaforma.consumer</groupId><artifactId>image-comparison-consumer</artifactId><version>0.0.0-local</version>
+  <properties><comparison.version>5.0.0</comparison.version></properties>
+  <repositories><repository><id>verified-candidate</id><url>${comparison.repository}</url><snapshots><enabled>true</enabled></snapshots></repository></repositories>
+  <dependencies><dependency><groupId>dev.nuaforma</groupId><artifactId>image-comparison-kotlin</artifactId><version>${comparison.version}</version></dependency></dependencies>
+</project>

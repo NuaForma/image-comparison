@@ -1,6 +1,17 @@
 .idea/*
 build/*
+**/build/
 *.iml
 out/*
 .gradle/*
+**/.gradle/
+**/.kotlin/
 target/*
+
+# Modified by NuaForma: workstation settings and generated test output.
+AGENTS.local.md
+/result.png
+**/target/
+
+**/__pycache__/
+*.pyc
