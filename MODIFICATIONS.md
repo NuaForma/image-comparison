@@ -1,6 +1,6 @@
 # NuaForma modifications
 
-This fork starts at upstream v4.4.0 (`188adc076324ed481300f72af627d13f5bb92ee1`). The original LICENSE and comparison algorithm implementations are unchanged. All production and test Java files have been relocated from `com.github.romankh3.image.comparison` to `dev.nuaforma.image.comparison`, with package/import edits and prominent modification notices.
+This fork starts at upstream v4.4.0 (`188adc076324ed481300f72af627d13f5bb92ee1`). The original LICENSE is unchanged. The initial maintenance baseline preserved comparison algorithms; later behavior fixes are identified below. All production and test Java files have been relocated from `com.github.romankh3.image.comparison` to `dev.nuaforma.image.comparison`, with package/import edits and prominent modification notices.
 
 Changes for the unreleased maintenance baseline (2026-10-25):
 
@@ -13,6 +13,10 @@ Changes for the unreleased maintenance baseline (2026-10-25):
 - Retired the duplicate Gradle build/launcher/wrapper, Travis workflow, old Gradle GitHub workflow and upstream funding configuration. They are recoverable in upstream history; obsolete publishing/service integrations are not used by this fork.
 - Added Maven wrapper, CI, consumer/bytecode verification, maintenance/security/license review guides, changelog, agent entry point and this attribution record.
 
-No comparison algorithms or test image fixtures were changed. The Java package relocation changes fully qualified API names and the automatic module name; Java 17 is the new minimum. Both are intentional compatibility breaks. New repository files are NuaForma maintenance additions unless they carry an Apache wrapper header. Future changes must update this record and mark modified upstream files clearly.
+The initial maintenance baseline changed no comparison algorithms or test image fixtures. The Java package relocation changes fully qualified API names and the automatic module name; Java 17 is the new minimum. Both are intentional compatibility breaks. New repository files are NuaForma maintenance additions unless they carry an Apache wrapper header. Future changes must update this record and mark modified upstream files clearly.
 
 Dependency/POM review (issue #14): replace the remaining mocked filesystem failure with a real temporary parent-file failure in `ImageComparisonUtilUnitTest.java`; remove Mockito and its mock-maker resource; replace the broad JUnit aggregate with explicit test-scoped Jupiter API/engine dependencies. Constrain JUnit's transitive JSpecify annotations to the reviewed 1.0.1 patch. Clarify the POM resource root and retain pinned lifecycle/artifact plugins. Production code, public API and algorithm behavior are unchanged by this cleanup.
+
+Origin correctness (issue #3): modify `ImageComparison.mergeRectangles` to identify merged-away regions with invalid default bounds instead of a valid zero-size origin rectangle. Add synthetic corner/edge/overlap and pixel-output regressions plus a packaged-consumer origin check. This intentionally fixes false MATCH results at (0,0); public signatures, tolerance/percentage policies and existing image fixtures are unchanged.
+
+Sequential reuse (issue #4): reset region counters at the start of `ImageComparison.populateRectangles`, shared by comparisons and mask creation. Add regressions for repeated/interleaved operations, updated options and image pixels, and stable size mismatches; extend the packaged consumer. This fixes state leakage between operations without adding a shared-instance thread-safety guarantee or changing comparison policies.
