@@ -1,6 +1,17 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/branding/nuaforma-dark-transparent.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/branding/nuaforma-light.png">
+    <img src="assets/branding/nuaforma-light.png" alt="NuaForma logo" width="320">
+  </picture>
+</p>
+<p align="center"><strong>Image Comparison</strong></p>
+
 # NuaForma Image Comparison
 
-An independently maintained Apache-2.0 fork of [romankh3/image-comparison](https://github.com/romankh3/image-comparison), created from [v4.4.0](https://github.com/romankh3/image-comparison/tree/v4.4.0). Original author: Roman Beskrovnyi and upstream contributors. The original logo remains credited to [@dee-y](https://github.com/dee-y).
+[![Maven Central](https://img.shields.io/maven-central/v/dev.nuaforma/image-comparison?strategy=highestVersion&label=Maven%20Central&color=008b90)](https://central.sonatype.com/artifact/dev.nuaforma/image-comparison)
+
+An independently maintained Apache-2.0 fork of [romankh3/image-comparison](https://github.com/romankh3/image-comparison), created from [v4.4.0](https://github.com/romankh3/image-comparison/tree/v4.4.0). Original author: Roman Beskrovnyi and upstream contributors. The original upstream logo assets remain credited to [@dee-y](https://github.com/dee-y).
 
 Compare two `BufferedImage` values, classify matches and size mismatches, mark differing regions and exclude configured rectangles. The Java core uses standard Java/AWT only, with **no external runtime dependencies**. This is a generic image comparison library; PDF rendering and product integration are outside its scope.
 
@@ -14,7 +25,7 @@ We appreciate the original author's and contributors' work. Their authorship, Gi
 
 ## Status and compatibility
 
-No NuaForma release has been published. This source prepares the first release candidate **5.0.0**, selected by the maintainer. Coordinates are `dev.nuaforma:image-comparison` and the optional `dev.nuaforma:image-comparison-kotlin`. Java baseline, namespace and approved behavior changes intentionally break compatibility with upstream v4.4.0. Choosing the version does not create a release or tag. Upstream tags identify upstream releases only.
+The first NuaForma release, **[5.0.0](https://github.com/NuaForma/image-comparison/releases/tag/v5.0.0)**, is available on Maven Central. Coordinates are `dev.nuaforma:image-comparison` and the optional `dev.nuaforma:image-comparison-kotlin`. Java baseline, namespace and approved behavior changes intentionally break compatibility with upstream v4.4.0. Upstream tags identify upstream releases only.
 
 Java 17 is the minimum supported runtime and API/bytecode target. Java 8 is unsupported. Production classes now use `dev.nuaforma.image.comparison` instead of `com.github.romankh3.image.comparison`. Method shapes are preserved; approved behavior corrections are recorded in CHANGELOG.md. The package relocation breaks source/binary compatibility and requires callers to update imports and recompile. The runtime baseline is also intentionally breaking. Build and tests require JDK 17 or later; CI checks JDK 17 and 25 and runs a standalone packaged consumer on both, including the Java 17 minimum for artifacts built on Java 25. Test libraries do not become runtime dependencies. Kotlin is optional and is not required by Java-only consumers. See [maintenance and compatibility](docs/maintenance.md) for exact boundaries and verification.
 
@@ -40,9 +51,9 @@ dependencies {
 }
 ```
 
-This brings in `image-comparison`, Kotlin stdlib and required annotations transitively; no separate core declaration is needed. These coordinates are not published yet.
+This brings in `image-comparison`, Kotlin stdlib and required annotations transitively; no separate core declaration is needed. Both artifacts are available on Maven Central.
 
-The rectangle is inclusive and must fit inside `expected`. Mismatches throw an inspectable `AssertionError`; the API never writes diagnostics automatically. No Kotlin artifact is published yet. See the module guide for allowed percentages, validation, result ownership and inherited core-policy limitations.
+The rectangle is inclusive and must fit inside `expected`. Mismatches throw an inspectable `AssertionError`; the API never writes diagnostics automatically. See the module guide for allowed percentages, validation, result ownership and inherited core-policy limitations.
 
 ## Comparison behavior
 
