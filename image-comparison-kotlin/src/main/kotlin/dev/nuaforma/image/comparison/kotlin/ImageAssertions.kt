@@ -104,7 +104,7 @@ public fun assertImagesMatch(
         val diagnostic = "${result.imageComparisonState}: expected ${expected.width}x${expected.height}, " +
             "actual ${actual.width}x${actual.height}; different pixels " +
             String.format(Locale.ROOT, "%.4f%%", result.differencePercent) +
-            "; regions ${result.rectangles?.size ?: 0}"
+            "; regions ${result.rectangles.size}"
         val context = message?.takeIf { it.isNotEmpty() }?.let { "$it: " } ?: ""
         throw ImageComparisonAssertionError(result, context + diagnostic)
     }

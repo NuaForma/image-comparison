@@ -5,10 +5,13 @@ import dev.nuaforma.image.comparison.model.Rectangle;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.util.Collections;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /** Independent consumer compiled against Java 17 APIs, with only the packaged library on its classpath. */
 public final class Java17Consumer {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         BufferedImage expected = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
         BufferedImage actual = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
         require(new ImageComparison(expected, actual).compareImages().getImageComparisonState()
@@ -50,6 +53,28 @@ public final class Java17Consumer {
         require(hidden.getImageComparisonState() == ImageComparisonState.MISMATCH
                 && hidden.getRectangles().size() == 1
                 && hidden.getResult().getRGB(5, 5) == Color.WHITE.getRGB(), "drawing filter preserves detection");
+        ImageComparisonResult plainMatch = new ImageComparison(expected, expected).compareImages();
+        require(plainMatch.getRectangles().isEmpty(), "match has empty rectangle collection");
+        ImageComparisonResult differentSize = new ImageComparison(expected,
+                new BufferedImage(11, 10, BufferedImage.TYPE_INT_RGB)).compareImages();
+        require(differentSize.getRectangles().isEmpty(), "size mismatch has empty rectangle collection");
+        plainMatch.setRectangles(null);
+        require(plainMatch.getRectangles().isEmpty(), "null rectangle reset normalizes to empty");
+        mismatch.getResult().setRGB(0, 0, Color.BLUE.getRGB());
+        require(actual.getRGB(0, 0) == Color.BLACK.getRGB(), "disposed graphics leave caller input usable and unchanged");
+        Path invalidInput = Files.createTempFile("image-comparison-consumer-", ".png");
+        boolean invalidImageRejected = false;
+        try {
+            Files.writeString(invalidInput, "synthetic invalid image data");
+            try {
+                dev.nuaforma.image.comparison.ImageComparisonUtil.readImageFromResources(invalidInput.toString());
+            } catch (dev.nuaforma.image.comparison.exception.ImageComparisonException exception) {
+                invalidImageRejected = true;
+            }
+        } finally {
+            Files.delete(invalidInput);
+        }
+        require(invalidImageRejected, "present text file fails at decode boundary");
         System.out.println("Independent Java 17 consumer passed on " + System.getProperty("java.version"));
     }
 

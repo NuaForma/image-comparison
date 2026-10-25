@@ -145,6 +145,40 @@ class ImageAssertionsTest {
     }
 
     @Test
+    fun matchingAndSizeMismatchResultsHaveIndependentEmptyCollections() {
+        val match = assertImagesMatch(image(), image())
+        val another = assertImagesMatch(image(), image())
+        val sizeFailure = assertThrows(ImageComparisonAssertionError::class.java) {
+            assertImagesMatch(image(), image(11, 10))
+        }
+        assertTrue(match.rectangles.isEmpty())
+        assertTrue(another.rectangles.isEmpty())
+        assertTrue(sizeFailure.comparisonResult.rectangles.isEmpty())
+        match.rectangles.add(Rectangle(1, 1, 1, 1))
+        assertTrue(another.rectangles.isEmpty())
+        assertTrue(sizeFailure.comparisonResult.rectangles.isEmpty())
+        match.setRectangles(null)
+        assertTrue(match.rectangles.isEmpty())
+    }
+
+    @Test
+    fun diagnosticImagesRemainUsableAfterOwnedDrawingContextsAreDisposed() {
+        val expected = image()
+        val actual = changed()
+        val error = assertThrows(ImageComparisonAssertionError::class.java) { assertImagesMatch(expected, actual) }
+        val graphics = error.comparisonResult.result.createGraphics()
+        try {
+            graphics.color = Color.BLUE
+            graphics.fillRect(0, 0, 1, 1)
+        } finally {
+            graphics.dispose()
+        }
+        assertEquals(Color.BLUE.rgb, error.comparisonResult.result.getRGB(0, 0))
+        assertEquals(Color.BLACK.rgb, actual.getRGB(0, 0))
+        assertEquals(Color.BLACK.rgb, expected.getRGB(0, 0))
+    }
+
+    @Test
     fun invalidToleranceIsRejectedInsteadOfSilentlyIgnored() {
         for (value in listOf(-0.1, 1.0, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY)) {
             assertThrows(IllegalArgumentException::class.java) {

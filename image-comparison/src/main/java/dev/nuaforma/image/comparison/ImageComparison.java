@@ -1,4 +1,4 @@
-// Modified by NuaForma: package relocation, comparison contracts and bounded-stack grouping (#3, #4, #6, #7, #8, #9); see MODIFICATIONS.md.
+// Modified by NuaForma: package relocation, comparison contracts and bounded-stack grouping and owned graphics (#3, #4, #6, #7, #8, #9, #12); see MODIFICATIONS.md.
 package dev.nuaforma.image.comparison;
 
 import dev.nuaforma.image.comparison.model.ExcludedAreas;
@@ -401,10 +401,11 @@ public class ImageComparison {
      */
     private BufferedImage drawRectangles(List<Rectangle> rectangles) {
         BufferedImage resultImage = ImageComparisonUtil.deepCopy(actual);
-        Graphics2D graphics = preparedGraphics2D(resultImage);
-
-        drawExcludedRectangles(graphics);
-        drawRectanglesOfDifferences(rectangles, graphics);
+        ImageComparisonUtil.drawWithGraphics(resultImage, graphics -> {
+            graphics.setStroke(new BasicStroke(rectangleLineWidth));
+            drawExcludedRectangles(graphics);
+            drawRectanglesOfDifferences(rectangles, graphics);
+        });
 
         return resultImage;
     }
@@ -452,18 +453,6 @@ public class ImageComparison {
         if (fillDifferenceRectangles) {
             fillRectangles(graphics, rectanglesForDraw, percentOpacityDifferenceRectangles);
         }
-    }
-
-    /**
-     * Prepare {@link Graphics2D} based on resultImage and rectangleLineWidth
-     *
-     * @param image image based on created {@link Graphics2D}.
-     * @return prepared {@link Graphics2D} object.
-     */
-    private Graphics2D preparedGraphics2D(BufferedImage image) {
-        Graphics2D graphics = image.createGraphics();
-        graphics.setStroke(new BasicStroke(rectangleLineWidth));
-        return graphics;
     }
 
     /**

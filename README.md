@@ -46,7 +46,7 @@ The rectangle is inclusive and must fit inside `expected`. Mismatches throw an i
 
 ## Comparison behavior
 
-The [comparison contract](docs/comparison-contract.md) defines tolerance, transparency, exclusions, percentages and drawing filters. RGB and alpha both participate in pixel comparison. Reported difference is the percentage of non-excluded pixels exceeding tolerance; accepted matches can retain a nonzero percentage. Unequal dimensions always mean `SIZE_MISMATCH` and 100%, without resizing. Minimum rectangle size and maximum rectangle count affect drawing only. Grouping uses a heap worklist rather than recursive calls.
+The [comparison contract](docs/comparison-contract.md) defines tolerance, transparency, exclusions, percentages and drawing filters. RGB and alpha both participate in pixel comparison. Reported difference is the percentage of non-excluded pixels exceeding tolerance; accepted matches can retain a nonzero percentage. Unequal dimensions always mean `SIZE_MISMATCH` and 100%, without resizing. Minimum rectangle size and maximum rectangle count affect drawing only. Grouping uses a heap worklist rather than recursive calls. Result rectangle collections are always non-null. Image loading rejects invalid input immediately and releases its owned classpath streams; internal drawing contexts are disposed even when drawing fails.
 
 ## Build
 
