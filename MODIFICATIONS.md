@@ -36,3 +36,5 @@ README branding (issue #36): reuse the approved NuaForma light/dark logos above 
 - 2026-10-30 (#39): route development Maven publications to Nexus, keep stable-only Central mutation gates, add deliberate signed snapshot publishing and offline protocol regressions. Core comparison behavior and runtime dependencies are unchanged.
 
 - 2026-10-30 (#39): correct the unavailable release/QA JDK pin to the official Temurin 17.0.21+9 build, consistently across preparation/upload/read-only consumer workflows. Existing artifact review hashes remain mandatory.
+
+- 2026-10-30 (#41): publish core/adapter snapshots automatically after green develop CI through the reusable signed publisher, preserve pending merges using native queues, and bind publication receipts to the exact source/run. Stable comparison APIs, release versions and runtime dependencies are unchanged.

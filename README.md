@@ -17,7 +17,7 @@ An independently maintained Apache-2.0 fork of [romankh3/image-comparison](https
 
 Compare two `BufferedImage` values, classify matches and size mismatches, mark differing regions and exclude configured rectangles. The Java core uses standard Java/AWT only, with **no external runtime dependencies**. This is a generic image comparison library; PDF rendering and product integration are outside its scope.
 
-New alpha/beta/RC Maven versions and snapshots use the [NuaForma Nexus repositories](docs/nexus-publishing.md); stable releases use Maven Central. Existing Central publications remain available.
+New alpha/beta/RC Maven versions and snapshots use the [NuaForma Nexus repositories](docs/nexus-publishing.md); stable releases use Maven Central. Existing Central publications remain available. Green merges to `develop` automatically publish signed snapshots of both libraries.
 
 ## Why this fork exists
 

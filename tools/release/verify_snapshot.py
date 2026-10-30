@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import os
 import pathlib
 import re
 import xml.etree.ElementTree as ET
@@ -63,6 +64,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=pathlib.Path, required=True)
     args = parser.parse_args()
     result = verify(args.repository, args.version, args.modules)
+    result.update(sourceCommit=os.environ.get("GITHUB_SHA"), workflowRun=os.environ.get("GITHUB_RUN_ID"))
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("x", encoding="utf-8") as file:
         file.write(json.dumps(result, indent=2) + "\n")
