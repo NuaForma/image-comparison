@@ -73,3 +73,7 @@ repositories {
 For snapshots add the separate `nuaforma-snapshots` URL, enable snapshots and disable releases in Maven, or use `mavenContent { snapshotsOnly() }` in Gradle. Avoid dynamic versions in reproducible builds: snapshots may resolve to a newer generation later. Publishing these workflow changes does not publish any artifact; a first authorized Nexus run is still needed to verify the real credentials and server write policies.
 
 The Maven client maintains repository metadata ([Sonatype documentation](https://help.sonatype.com/en/tasks.html)); Gradle supports Nexus and native snapshot publishing through its existing [Maven Publish plugin](https://docs.gradle.org/current/userguide/publishing_maven.html). No runtime dependency is added by this routing.
+
+## Bounded persistent prerelease transport
+
+The immutable prerelease uploader shares the reviewed implementation with NuaForma. It uses at most six workers and persistent TLS connections, retains full preflight checks, uploads base artifacts before their signatures/checksums and metadata before its checksums, and records every known/uncertain outcome before starting the next batch. Failed writes are never automatically retried. Anonymous verification downloads actual artifacts, signatures and module indexes; checksum sidecars are derived/checked before upload and acknowledged by Nexus, without a second download for each sidecar. All connections are closed. Gradle native snapshot publication and stable Central publication remain unchanged.
