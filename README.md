@@ -10,6 +10,8 @@
 # NuaForma Image Comparison
 
 [![Maven Central](https://img.shields.io/maven-central/v/dev.nuaforma/image-comparison?strategy=highestVersion&label=Maven%20Central&color=008b90)](https://central.sonatype.com/artifact/dev.nuaforma/image-comparison)
+[![Nexus prerelease](https://img.shields.io/nexus/nuaforma-prereleases/dev.nuaforma/image-comparison?server=https%3A%2F%2Frepo.nuaforma.dev&label=Nexus%20prerelease&color=008b90&cacheSeconds=300)](https://repo.nuaforma.dev/#browse/browse:nuaforma-prereleases:dev%2Fnuaforma%2Fimage-comparison)
+[![Nexus snapshot](https://img.shields.io/nexus/nuaforma-snapshots/dev.nuaforma/image-comparison?server=https%3A%2F%2Frepo.nuaforma.dev&label=Nexus%20snapshot&color=52688f&cacheSeconds=300)](https://repo.nuaforma.dev/#browse/browse:nuaforma-snapshots:dev%2Fnuaforma%2Fimage-comparison)
 
 An independently maintained Apache-2.0 fork of [romankh3/image-comparison](https://github.com/romankh3/image-comparison), created from [v4.4.0](https://github.com/romankh3/image-comparison/tree/v4.4.0). Original author: Roman Beskrovnyi and upstream contributors. The original upstream logo assets remain credited to [@dee-y](https://github.com/dee-y).
 
