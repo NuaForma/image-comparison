@@ -1,4 +1,4 @@
-name: Prepare Maven Central release (no upload)
+name: Prepare Maven release (no upload)
 on:
   workflow_dispatch:
     inputs:
@@ -39,7 +39,7 @@ jobs:
         uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: '17.0.20+1'
+          java-version: '17.0.21+9'
       - name: Verify wrapper identity
         run: |
           echo '7a9ce74cff467ca1bf60a4fcd9f05185acceda4d0f382434d393e17864262c5d  gradle/wrapper/gradle-wrapper.jar' | sha256sum --check --strict

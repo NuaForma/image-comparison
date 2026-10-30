@@ -17,6 +17,18 @@ allprojects {
     version = publicationVersion
 }
 
+val publishSnapshots = providers.gradleProperty("publishSnapshots").map { it.toBooleanStrict() }.orElse(false).get()
+if (publishSnapshots) {
+    require(Regex("(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)-SNAPSHOT").matches(publicationVersion)) {
+        "Nexus snapshots require canonical X.Y.Z-SNAPSHOT"
+    }
+    tasks.register("publishSnapshots") {
+        group = "publishing"
+        description = "Publish signed development snapshots using Maven timestamp metadata (explicit opt-in)."
+        dependsOn(subprojects.map { "${it.path}:publishMavenJavaPublicationToNexusSnapshotsRepository" })
+    }
+}
+
 subprojects {
     apply(plugin = "java-library")
     apply(plugin = "maven-publish")
@@ -69,9 +81,26 @@ subprojects {
                 name = "verification"
                 url = rootProject.layout.buildDirectory.dir("verification-repository").get().asFile.toURI()
             }
+            if (publishSnapshots) {
+                maven {
+                    name = "NexusSnapshots"
+                    url = uri("https://repo.nuaforma.dev/repository/nuaforma-snapshots/")
+                    credentials {
+                        username = providers.environmentVariable("NEXUS_USERNAME").orNull
+                        password = providers.environmentVariable("NEXUS_PASSWORD").orNull
+                    }
+                }
+            }
         }
     }
     val signArtifacts = providers.gradleProperty("signArtifacts").orNull
+    tasks.withType<org.gradle.api.publish.maven.tasks.PublishToMavenRepository>().configureEach {
+        doFirst {
+            require(repository.name != "NexusSnapshots" || signArtifacts == "true") {
+                "Remote snapshot publication requires in-memory artifact signing"
+            }
+        }
+    }
     require(signArtifacts == null || signArtifacts in setOf("true", "false")) { "signArtifacts must be true or false" }
     if (signArtifacts == "true") {
         apply(plugin = "signing")
@@ -134,7 +163,7 @@ tasks.register<JavaExec>("verifyGroupingConsumer") {
     jvmArgs("-Xss1m")
 }
 
-// The only publication destination remains the ignored local filesystem repository.
+// Ordinary builds publish only to the ignored local verification repository; remote snapshots require explicit opt-in.
 tasks.register("stageLibraries") {
     dependsOn(subprojects.map { "${it.path}:publishAllPublicationsToVerificationRepository" })
 }

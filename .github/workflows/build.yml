@@ -63,7 +63,7 @@ jobs:
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: '17.0.20+1'
+          java-version: '17.0.21+9'
       - name: Offline release gates, also with optimization enabled
         run: |
           python3 -m unittest discover -s tools/release

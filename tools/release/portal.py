@@ -16,6 +16,7 @@ from bundle import encode_entries
 from policy import check_review, context, git, load_review, source_gate
 from publications import FINGERPRINT, MODULES, require, release_paths, version_text
 from signatures import verify_all
+from maven_destination import stable_version
 
 BASE = "https://central.sonatype.com/api/v1/publisher/"
 PUBLIC = "https://repo.maven.apache.org/maven2/"
@@ -86,7 +87,7 @@ def unused_version(version, opener=open_request):
             require(error.code == 404, "Cannot establish that this version is unused; stop before uploading")
 
 
-def upload(bundle, bundle_record, review, public_key, token, opener=open_request, notices=None):
+def verified_bundle(bundle, bundle_record, review, public_key, notices=None):
     check_review(review, review["version"])
     require(bundle_record.get("version") == review["version"] and bundle_record.get("fingerprint") == FINGERPRINT
             and bundle_record.get("artifactHashes") == review["artifactHashes"]
@@ -100,6 +101,12 @@ def upload(bundle, bundle_record, review, public_key, token, opener=open_request
         repository = pathlib.Path(directory)
         unpack_checked(data, repository, review)
         check_candidate(repository, review, public_key, notices)
+    return data
+
+
+def upload(bundle, bundle_record, review, public_key, token, opener=open_request, notices=None):
+    stable_version(review["version"])
+    data = verified_bundle(bundle, bundle_record, review, public_key, notices)
     boundary = "image-comparison-"+uuid.uuid4().hex
     body = ("--"+boundary+'\r\nContent-Disposition: form-data; name="bundle"; filename="image-comparison-central.zip"\r\nContent-Type: application/octet-stream\r\n\r\n').encode()+data+("\r\n--"+boundary+"--\r\n").encode()
     query = urllib.parse.urlencode({"name": "Image Comparison "+review["version"], "publishingType": "USER_MANAGED"})
@@ -110,7 +117,7 @@ def upload(bundle, bundle_record, review, public_key, token, opener=open_request
     except Exception:
         raise RuntimeError("Upload outcome may be uncertain; inspect the Portal, do not automatically retry") from None
     return {"deploymentId": identity, "version": review["version"], "sourceCommit": review["sourceCommit"],
-            "bundleSha256": digest, "publishingType": "USER_MANAGED", "published": False}
+            "bundleSha256": hashlib.sha256(data).hexdigest(), "publishingType": "USER_MANAGED", "published": False}
 
 
 def status(identity, review, token, opener):
@@ -144,6 +151,7 @@ def fetch_candidate(identity, review, public_key, token, destination, opener, pu
 
 
 def publish(identity, review, public_key, token, opener=open_request, notices=None):
+    stable_version(review["version"])
     check_review(review, review["version"])
     require(status(identity, review, token, opener).get("deploymentState") == "VALIDATED", "Require VALIDATED; never resend publish for PUBLISHING/PUBLISHED or failed deployments")
     with tempfile.TemporaryDirectory(prefix="image-comparison-staged-check-") as directory:
@@ -175,6 +183,8 @@ def main():
     parser.add_argument("--repository", type=pathlib.Path)
     parser.add_argument("--confirm", required=True, choices=("UPLOAD_ONCE", "PUBLISH_ONCE", "VERIFY_ONLY"))
     args = parser.parse_args()
+    if args.mode in ("upload", "publish"):
+        stable_version(args.version)
     require(args.confirm == {"upload":"UPLOAD_ONCE", "publish":"PUBLISH_ONCE", "verify":"VERIFY_ONLY"}[args.mode], "Confirmation does not match the requested operation")
     require(not args.output.exists(), "Never overwrite a deployment/request record or blindly retry")
     context()

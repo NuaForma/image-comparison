@@ -315,7 +315,7 @@ class WorkflowTests(unittest.TestCase):
 
     def test_release_workflows_are_manual_main_only_and_scope_secrets_to_steps(self):
         names=("maven-central-prepare.yml","central-release-upload.yml","central-release-publish.yml","central-release-verify.yml")
-        allowed={"MAVEN_SIGNING_KEY","MAVEN_SIGNING_PASSWORD","MAVEN_CENTRAL_USERNAME","MAVEN_CENTRAL_PASSWORD"}
+        allowed={"MAVEN_SIGNING_KEY","MAVEN_SIGNING_PASSWORD","MAVEN_CENTRAL_USERNAME","MAVEN_CENTRAL_PASSWORD","NEXUS_USERNAME","NEXUS_PASSWORD"}
         for name in names:
             text=(ROOT/".github/workflows"/name).read_text()
             self.assertIn("on:\n  workflow_dispatch:",text);self.assertNotIn("  push:",text);self.assertNotIn("  pull_request:",text)
@@ -324,7 +324,7 @@ class WorkflowTests(unittest.TestCase):
             self.assertIn("cancel-in-progress: false",text);self.assertNotIn("contents: write",text)
             for line in text.splitlines():
                 if "secrets." in line:
-                    self.assertTrue(line.startswith("          MAVEN_"),line)
+                    self.assertTrue(line.startswith(("          MAVEN_", "          NEXUS_")),line)
                     self.assertIn(line.strip().split(":")[0],allowed)
             if name=="maven-central-prepare.yml":
                 self.assertNotIn("secrets.MAVEN_CENTRAL_",text);self.assertNotIn("portal.py",text)
