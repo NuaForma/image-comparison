@@ -65,7 +65,7 @@ The approved **public primary** Maven signing fingerprint is `74317C6CE9C61B80A2
 
 Only non-executable JSON source/hash/consumer records are retained as Actions artifacts. No JAR, ZIP bundle, private key, public-key file, cache, raw signing output or review script is uploaded as an Actions artifact. Source commit and source-tree cleanliness are recorded; every generated record has releaseApproval=false. Snapshot preparation is allowed as a configuration test and cannot become an immutable release bundle.
 
-The release toolchain is pinned to Temurin 17.0.20+1, observed in the successful project CI, with the checked Gradle wrapper. Preparation and later rebuild use that same pin. Other Java/vendor/patch combinations can change documentation bytes; exact review hashes fail closed on any difference and must never be updated merely to make a publish pass. Normal CI still checks Java 17 and 25 and unchanged Java-25-built artifacts on Java 17.
+The release toolchain is pinned to the available Temurin 17.0.21+9 release (official tag `jdk-17.0.21+9`), with the checked Gradle wrapper. Preparation and later rebuild use that same pin. Other Java/vendor/patch combinations can change documentation bytes; exact review hashes fail closed on any difference and must never be updated merely to make a publish pass. Normal CI still checks Java 17 and 25 and unchanged Java-25-built artifacts on Java 17.
 
 The workflows must first reach main through the normal reviewed promotion process. Their existence on develop does not authorize or trigger execution on main. No push, merge or tag automatically starts a release job.
 

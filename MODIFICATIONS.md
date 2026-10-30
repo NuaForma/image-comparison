@@ -34,3 +34,5 @@ Release candidate (issue #23): fix both publication versions at 5.0.0 for the fi
 README branding (issue #36): reuse the approved NuaForma light/dark logos above the existing heading with a centered Image Comparison subtitle, add the same dynamic Maven Central badge style for this library and update stale publication statements after the verified 5.0.0 release. Record logo provenance and preserve separate upstream logo/authorship attribution. No code, dependency, release tag or published artifact is changed.
 
 - 2026-10-30 (#39): route development Maven publications to Nexus, keep stable-only Central mutation gates, add deliberate signed snapshot publishing and offline protocol regressions. Core comparison behavior and runtime dependencies are unchanged.
+
+- 2026-10-30 (#39): correct the unavailable release/QA JDK pin to the official Temurin 17.0.21+9 build, consistently across preparation/upload/read-only consumer workflows. Existing artifact review hashes remain mandatory.
