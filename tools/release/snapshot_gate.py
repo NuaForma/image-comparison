@@ -1,4 +1,4 @@
-"""Manual develop-only snapshot gate: exact checkout, verified source and successful CI."""
+"""Develop-only snapshot gate: exact signed checkout and successful source CI."""
 import argparse
 import json
 import os
@@ -6,6 +6,27 @@ import re
 import subprocess
 
 from maven_destination import destination, require
+
+
+def automatic_version(version):
+    kind = destination(version)["kind"]
+    base = version.split("-", 1)[0]
+    if kind == "stable":
+        major, minor, patch = base.split(".")
+        base = major + "." + minor + "." + str(int(patch) + 1)
+    return base + "-SNAPSHOT"
+
+
+def successful_run(run, jobs, repository, revision, identity):
+    require(run.get("id") == int(identity) and run.get("head_sha") == revision
+            and run.get("head_branch") == "develop" and run.get("event") == "push"
+            and run.get("path") == ".github/workflows/build.yml"
+            and run.get("repository", {}).get("full_name") == repository,
+            "Require this exact develop Build run, not another source/run/workflow")
+    for name in ("Build (Java 17)", "Build (Java 25)", "Release preparation (disposable keys, no upload)"):
+        matches = [job for job in jobs if job.get("name") == name]
+        require(len(matches) == 1 and matches[0].get("status") == "completed"
+                and matches[0].get("conclusion") == "success", "Both Java builds and release preparation must finish successfully before publication")
 
 
 def successful_checks(checks, sonar=False):
@@ -23,6 +44,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repository", required=True, choices=("NuaForma/NuaForma", "NuaForma/image-comparison"))
     parser.add_argument("--version", required=True)
+    parser.add_argument("--ci-run")
     args = parser.parse_args()
     require(destination(args.version)["kind"] == "snapshot", "Require canonical X.Y.Z-SNAPSHOT")
     require(os.environ.get("GITHUB_REPOSITORY") == args.repository and os.environ.get("GITHUB_REF") == "refs/heads/develop",
@@ -39,9 +61,17 @@ def main():
     commit = json.loads(run("gh", "api", "repos/" + args.repository + "/commits/" + revision))
     verification = commit.get("commit", {}).get("verification", {})
     require(verification.get("verified") is True and verification.get("reason") == "valid", "Require GitHub-verified signed snapshot source")
-    checks = json.loads(run("gh", "api", "repos/" + args.repository + "/commits/" + revision + "/check-runs?per_page=100&filter=latest"))
-    require(checks["total_count"] <= 100, "Too many check runs; explicit pagination review required")
-    successful_checks(checks["check_runs"], sonar=args.repository == "NuaForma/NuaForma")
+    if args.ci_run:
+        require(re.fullmatch(r"[1-9][0-9]*", args.ci_run) and args.ci_run == os.environ.get("GITHUB_RUN_ID"), "Require the current calling CI run")
+        endpoint = "repos/" + args.repository + "/actions/runs/" + args.ci_run
+        current = json.loads(run("gh", "api", endpoint))
+        jobs = json.loads(run("gh", "api", endpoint + "/jobs?per_page=100"))
+        require(jobs["total_count"] <= 100, "Too many CI jobs; explicit pagination review required")
+        successful_run(current, jobs["jobs"], args.repository, revision, args.ci_run)
+    else:
+        checks = json.loads(run("gh", "api", "repos/" + args.repository + "/commits/" + revision + "/check-runs?per_page=100&filter=latest"))
+        require(checks["total_count"] <= 100, "Too many check runs; explicit pagination review required")
+        successful_checks(checks["check_runs"], sonar=args.repository == "NuaForma/NuaForma")
     print("Exact signed develop source and required Java CI verified; snapshot destination: " + destination(args.version)["repository"])
 
 

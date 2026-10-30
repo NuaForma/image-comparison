@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Publish signed Nexus snapshots of both libraries after every successful develop merge; queue pending CI/publications and retain exact source/run provenance (#41). Stable releases remain on Maven Central.
+
 ## 5.0.0 — release candidate
 
 - Prepare protected manual Maven Central workflows for the two library modules, signed source tags, exact eight-artifact review and separate upload/publish/public verification (#21).

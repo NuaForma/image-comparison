@@ -21,11 +21,19 @@ For each repository, grant the dedicated publisher only the corresponding `nx-re
 
 Use organization secrets **`NEXUS_USERNAME`** and **`NEXUS_PASSWORD`**, scoped to `NuaForma/NuaForma` and `NuaForma/image-comparison`. Continue using **`MAVEN_SIGNING_KEY`** and **`MAVEN_SIGNING_PASSWORD`** for both destinations. Stable Central operations keep **`MAVEN_CENTRAL_USERNAME`** and **`MAVEN_CENTRAL_PASSWORD`**. Resolve unintended repository/environment overrides by name. Secret values stay in 1Password and process/step environments; do not put credentials in repository URLs, Gradle properties, workflow inputs, files, command arguments or logs. Signing/publication commands disable the configuration cache.
 
-## Manual snapshots
+## Automatic develop snapshots
 
-Wait for the selected **develop commit** to have successful Java 17/25 CI (and the actual SonarCloud analysis for NuaForma). In Actions, select **Publish snapshot to Nexus (manual)**, choose **develop**, enter a canonical snapshot version, and type **`PUBLISH_SNAPSHOT`**. The workflow checks the exact GitHub-verified signed checkout and latest required check runs before loading any publishing secrets. A generic SonarCloud status or an older green build cannot substitute for the required checks.
+Every merge into protected `develop` runs the complete Java 17/25 and release-preparation checks, then publishes a signed snapshot of **both** `image-comparison` and `image-comparison-kotlin`. PRs, forks, codex branches, main pushes and manual CI runs do not automatically publish. NuaForma's separate product snapshot workflow remains manual.
 
-Gradle's native `maven-publish` handles timestamp/build-number metadata; do not PUT non-timestamped snapshot filenames using the immutable prerelease uploader. Remote snapshot tasks are registered only with explicit `-PpublishSnapshots=true`, accept only canonical snapshot versions and refuse unsigned publication. Ordinary builds and local staging do not add any remote publishing target. The workflow compares anonymously downloaded POM/main/source/documentation JARs, Gradle module metadata when present, **and signatures** with the locally signed artifacts. Snapshot publication creates no release tag, GitHub release, container image or site deployment. It has no push/schedule trigger; automatic develop publication can be introduced separately later.
+The shared publisher derives the development coordinate from the checked-out source: stable `5.0.0` produces `5.0.1-SNAPSHOT`, an immutable `5.1.0-alpha.1` produces `5.1.0-SNAPSHOT`, and an explicit `5.1.0-SNAPSHOT` source version is retained. Publication overrides the Maven version without changing the source file or published stable installation examples.
+
+CI and publication use GitHub's native `queue: max` concurrency queues, with cancellation disabled. Newer merges do not replace pending runs. This also serializes metadata updates; GitHub queues up to 100 pending runs per group ([concurrency documentation](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)).
+
+Before loading publishing secrets, the reusable publisher verifies the exact signed checkout, the calling Build run's repository/branch/event/revision, and successful Java 17, Java 25 and disposable-key release-preparation jobs. It checks the current run rather than an unrelated check with the same name. No publication credential is provided to ordinary test jobs. Verification receipts record the source commit and workflow run alongside anonymous artifact/signature hashes.
+
+Gradle's native Maven publisher produces timestamp/build-number metadata. Remote tasks still require explicit opt-in, canonical snapshot versions and in-memory signing. Anonymous verification compares POM/main/source/documentation JARs, Gradle module metadata when present, and all signatures. No release tag, GitHub release, container or site deployment is created by a snapshot publication.
+
+For deliberate manual recovery, select **Publish signed snapshot to Nexus**, choose **develop**, supply the explicit snapshot version and type **PUBLISH_SNAPSHOT**. This uses the same serialized publisher and exact-source checks. It does not weaken immutable prerelease or Central approval gates.
 
 ## Immutable prerelease integrity and recovery
 
