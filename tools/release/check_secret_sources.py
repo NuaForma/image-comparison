@@ -21,14 +21,16 @@ def read(endpoint):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=pathlib.Path, required=True)
+    parser.add_argument("--destination", choices=("central", "nexus"), default="central")
     args = parser.parse_args()
+    names = NAMES if args.destination == "central" else {"NEXUS_USERNAME", "NEXUS_PASSWORD", "MAVEN_SIGNING_KEY", "MAVEN_SIGNING_PASSWORD"}
     repository = read("repos/"+REPOSITORY+"/actions/secrets?per_page=100")
     environment = read("repos/"+REPOSITORY+"/environments/maven-central/secrets?per_page=100")
     require(repository["total_count"] <= 100 and environment["total_count"] <= 100, "Secret metadata pagination requires explicit review")
-    overrides = NAMES & {item["name"] for item in repository["secrets"]+environment["secrets"]}
+    overrides = names & {item["name"] for item in repository["secrets"]+environment["secrets"]}
     require(not overrides, "A repository/environment secret overrides the organization configuration; resolve the names-only review before a real test")
     available = []
-    for name in sorted(NAMES):
+    for name in sorted(names):
         metadata = read("orgs/NuaForma/actions/secrets/"+name)
         visible = metadata.get("visibility") == "all"
         if metadata.get("visibility") == "selected":

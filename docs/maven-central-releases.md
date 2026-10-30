@@ -1,6 +1,10 @@
 # Maven Central release preparation
 
-The first release candidate is **5.0.0**, explicitly selected by the maintainer and fixed in this source; the future source tag is `v5.0.0`. This setup creates no tag, GitHub release, Central deployment or publication. It follows NuaForma's parameterized release approach for exactly two libraries, without its server/Playground/container gates.
+**Current routing:** only stable `X.Y.Z` versions may mutate Maven Central. New alphas, betas and RCs publish to Nexus; snapshots use the manual develop-only workflow. See [Nexus publication and setup](nexus-publishing.md). Previously published Central artifacts and their read-only verification remain available. Central-specific procedures below apply only to stable releases.
+
+The existing `maven-central` environment name is retained as the protected **main-only publication gate for both immutable routes**; it does not select the destination. In **Distribute reviewed Maven release (Central or Nexus)**, `UPLOAD_ONCE` stages stable versions on Central but **immediately publishes a prerelease to Nexus**. The signed-tag/eight-artifact review and signature checks remain mandatory. The separate Central publish/verify workflows are unnecessary for a Nexus prerelease: its retained Nexus receipt proves anonymous byte identity. Before a Nexus operation, run `python3 tools/release/check_secret_sources.py --destination nexus --output build/nexus-secret-names.json` using the existing authorized maintainer context; it reads names/visibility only. No new environment or unprotected immutable-release path is introduced.
+
+The published stable baseline is **5.0.0**, with source tag `v5.0.0`. Choose a new explicit version and matching signed source tag/review for the next publication; never reuse the published baseline. Preparation creates no tag, GitHub release, Central deployment or publication. It follows NuaForma's parameterized release approach for exactly two libraries, without its server/Playground/container gates.
 
 ## Coordinates and local publications
 
@@ -57,7 +61,7 @@ The approved **public primary** Maven signing fingerprint is `74317C6CE9C61B80A2
 
 ## Manual preparation, no external distribution
 
-`Prepare Maven Central release (no upload)` starts only by workflow_dispatch on reviewed `main` in this repository, behind the protected environment. First verify actual policy and the names-only preflight; then build/test unsigned libraries and run independent consumers. Fetch/check the expected public certificate, map only the two signing secrets to the local signing step, then independently verify all eight signatures. No Central token is available to preparation.
+`Prepare Maven release (no upload)` starts only by workflow_dispatch on reviewed `main` in this repository, behind the protected environment. First verify actual policy and the names-only preflight; then build/test unsigned libraries and run independent consumers. Fetch/check the expected public certificate, map only the two signing secrets to the local signing step, then independently verify all eight signatures. No Central token is available to preparation.
 
 Only non-executable JSON source/hash/consumer records are retained as Actions artifacts. No JAR, ZIP bundle, private key, public-key file, cache, raw signing output or review script is uploaded as an Actions artifact. Source commit and source-tree cleanliness are recorded; every generated record has releaseApproval=false. Snapshot preparation is allowed as a configuration test and cannot become an immutable release bundle.
 
@@ -74,7 +78,7 @@ The workflows must first reach main through the normal reviewed promotion proces
 
 ## Separately authorized external upload
 
-`Upload reviewed release to Central (USER_MANAGED)` requires an explicit immutable version, fresh secret-source preflight, the exact typed UPLOAD_ONCE confirmation and environment approval. It rechecks that all eight public coordinates are unused, verifies the exact review bytes/signatures/checksums and prepares a canonical 48-entry Maven-layout ZIP locally. It refuses extra/duplicate/path-escaping entries, snapshots, unsafe files, noncanonical/hidden data, unreviewed bytes or dirty source. Only then is the Portal token mapped into the upload step.
+The stable route of `Distribute reviewed Maven release (Central or Nexus)` requires an explicit immutable version, fresh secret-source preflight, the exact typed UPLOAD_ONCE confirmation and environment approval. It rechecks that all eight public coordinates are unused, verifies the exact review bytes/signatures/checksums and prepares a canonical 48-entry Maven-layout ZIP locally. It refuses extra/duplicate/path-escaping entries, snapshots, unsafe files, noncanonical/hidden data, unreviewed bytes or dirty source. Only then is the Portal token mapped into the upload step.
 
 One POST uploads in USER_MANAGED mode for validation; this is already external distribution, even though publication does not happen automatically. The record keeps deployment UUID/version/source/bundle hash with published=false. No automatic retry occurs. A timeout, malformed response, cancellation or record-write failure can follow a successful external action: inspect the Portal and recover its identity rather than blindly rerunning. Credentials use Base64(tokenUsername:tokenPassword) as Bearer; redirects with credentials are refused.
 

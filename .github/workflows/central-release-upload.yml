@@ -1,4 +1,4 @@
-name: Upload reviewed release to Central (USER_MANAGED)
+name: Distribute reviewed Maven release (Central or Nexus)
 on:
   workflow_dispatch:
     inputs:
@@ -12,7 +12,7 @@ on:
         default: false
         type: boolean
       confirmation:
-        description: Separately authorized external distribution; type UPLOAD_ONCE and never retry an uncertain upload
+        description: Type UPLOAD_ONCE; stable versions stage on Central, prereleases publish immediately to Nexus. Never blindly retry.
         required: true
         type: string
 
@@ -45,6 +45,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          python3 tools/release/maven_destination.py "$RELEASE_VERSION" >> "$GITHUB_STEP_SUMMARY"
           python3 tools/release/policy.py --version "$RELEASE_VERSION" --review "release-approvals/$RELEASE_VERSION.json"
       - name: Preserve current release policy, then check out the exact approved tagged source
         run: |
@@ -81,16 +82,28 @@ jobs:
         run: |
           python3 "$RUNNER_TEMP/image-comparison-release-policy/bundle.py" --repository build/verification-repository --version "$RELEASE_VERSION" --public-key build/release-review/public-key.asc --output build/release-review/central.zip
       - name: Upload once for validation, never automatically publish
+        if: ${{ !contains(inputs.version, '-') }}
         env:
           GH_TOKEN: ${{ github.token }}
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
         run: |
           python3 "$RUNNER_TEMP/image-comparison-release-policy/portal.py" upload --confirm UPLOAD_ONCE --version "$RELEASE_VERSION" --review "$RUNNER_TEMP/image-comparison-release-review.json" --public-key build/release-review/public-key.asc --bundle build/release-review/central.zip --bundle-record build/release-review/central.zip.json --output build/release-review/deployment.json
+      - name: Publish the reviewed immutable prerelease to Nexus once
+        if: ${{ contains(inputs.version, '-') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+        run: |
+          python3 "$RUNNER_TEMP/image-comparison-release-policy/nexus_publish.py" --confirm UPLOAD_ONCE --version "$RELEASE_VERSION" --review "$RUNNER_TEMP/image-comparison-release-review.json" --public-key build/release-review/public-key.asc --bundle build/release-review/central.zip --bundle-record build/release-review/central.zip.json --output build/release-review/nexus-publication.json
       - name: Retain deployment identity and checksums only
+        if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: image-comparison-central-deployment-${{ github.run_id }}
-          path: build/release-review/deployment.json
-          if-no-files-found: error
+          path: |
+            build/release-review/deployment.json
+            build/release-review/nexus-publication.json
+          if-no-files-found: warn
           retention-days: 14

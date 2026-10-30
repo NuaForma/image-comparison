@@ -1,4 +1,4 @@
-name: Prepare Maven Central release (no upload)
+name: Prepare Maven release (no upload)
 on:
   workflow_dispatch:
     inputs:
